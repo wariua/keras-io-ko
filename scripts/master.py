@@ -10,7 +10,7 @@ from nlp_api_master import NLP_API_MASTER
 
 MASTER = {
     "path": "/",
-    "title": "Keras: the Python Deep Learning library",
+    "title": "케라스: 파이썬 딥 러닝 라이브러리",
     "children": [
         {"path": "about", "title": "About Keras"},  # TODO
         {
