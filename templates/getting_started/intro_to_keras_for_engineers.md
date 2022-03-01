@@ -1,17 +1,17 @@
-# Introduction to Keras for Engineers
+# 엔지니어를 위한 케라스 소개
 
-**Author:** [fchollet](https://twitter.com/fchollet)<br>
-**Date created:** 2020/04/01<br>
-**Last modified:** 2020/04/28<br>
-**Description:** Everything you need to know to use Keras to build real-world machine learning solutions.
+**작성자:** [fchollet](https://twitter.com/fchollet)<br>
+**생성 날짜:** 2020/04/01<br>
+**최근 변경:** 2020/04/28<br>
+**설명:** 케라스를 써서 실용적인 기계 학습 솔루션을 만들기 위해 필요한 모든 것.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/intro_to_keras_for_engineers.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/intro_to_keras_for_engineers.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/intro_to_keras_for_engineers.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/intro_to_keras_for_engineers.py)
 
 
 
 ---
-## Setup
+## 준비
 
 
 ```python
@@ -21,87 +21,85 @@ from tensorflow import keras
 ```
 
 ---
-## Introduction
+## 들어가며
 
-Are you a machine learning engineer looking to use Keras
-to ship deep-learning powered features in real products? This guide will serve
-as your first introduction to core Keras API concepts.
+케라스를 이용해 실제 제품에 딥 러닝 기반 기능을 넣으려고 하는
+기계 학습 엔지니어라면 이 안내서에서 케라스 API의 핵심 개념들을
+접할 수 있다.
 
-In this guide, you will learn how to:
+이 안내서에서 다음을 배우게 된다.
 
-- Prepare your data before training a model (by turning it into either NumPy
- arrays or `tf.data.Dataset` objects).
-- Do data preprocessing, for instance feature normalization or vocabulary
- indexing.
-- Build a model that turns your data into useful predictions,
-using the Keras Functional API.
-- Train your model with the built-in Keras `fit()` method, while being
-mindful of checkpointing, metrics monitoring, and fault tolerance.
-- Evaluate your model on a test data and how to use it for inference on new data.
-- Customize what `fit()` does, for instance to build a GAN.
-- Speed up training by leveraging multiple GPUs.
-- Refine your model through hyperparameter tuning.
+- 모델 훈련 전에 데이터 준비하기.
+  (NumPy 배열이나 `tf.data.Dataset` 객체로 바꾸기)
+- 데이터 전처리하기. 가령 피처 정규화나 어휘 색인 만들기.
+- 데이터를 유용한 예측으로 바꿔 주는 모델을
+  케라스 함수형 API로 만들기.
+- 케라스에 내장된 `fit()` 메서드로 모델 훈련시키기.
+  체크포인트 저장, 지표 관찰, 장애 내성까지.
+- 테스트용 데이터로 모델 평가하기. 그 모델을 가지고 새 데이터로 추론하는 방법.
+- `fit()`의 동작 방식 바꾸기. 가령 GAN 만들기.
+- 여러 GPU 활용해서 훈련 속도 높이기.
+- 하이퍼파라미터 조정을 통해 모델 개선하기.
 
-At the end of this guide, you will get pointers to end-to-end examples to solidify
- these concepts:
+이 개념들을 견고하게 해 주는 다음 전구간 예시들에 대한 링크를
+안내서 끝에서 볼 수 있다.
 
-- Image classification
-- Text classification
-- Credit card fraud detection
+- 이미지 분류
+- 텍스트 분류
+- 신용카드 사기 탐지
 
-
----
-## Data loading & preprocessing
-
-Neural networks don't process raw data, like text files, encoded JPEG image files, or
- CSV files. They process **vectorized** & **standardized** representations.
-
-- Text files need to be read into string tensors, then split into words. Finally, the
- words need to be indexed & turned into integer tensors.
-- Images need to be read and decoded into integer tensors, then converted to floating
- point and normalized to small values (usually between 0 and 1).
-- CSV data needs to be parsed, with numerical features converted to floating point
- tensors and categorical features indexed and converted to integer tensors.
-Then each feature typically needs to be normalized to zero-mean and unit-variance.
-- Etc.
-
-Let's start with data loading.
 
 ---
-## Data loading
+## 데이터 적재 및 전처리하기
 
-Keras models accept three types of inputs:
+신경망은 텍스트 파일이나 JPEG 형식 이미지 파일, CSV 파일 같은 비가공 데이터를
+처리하지 않는다. **벡터화** 및 **표준화**한 표현을 처리한다.
 
-- **NumPy arrays**, just like Scikit-Learn and many other Python-based libraries. This
- is a good option if your data fits in memory.
-- **[TensorFlow `Dataset` objects](https://www.tensorflow.org/guide/data)**. This is a
-high-performance option that is more suitable for datasets that do not fit in memory
- and that are streamed from disk or from a distributed filesystem.
-- **Python generators** that yield batches of data (such as custom subclasses of
-the `keras.utils.Sequence` class).
+- 텍스트 파일은 문자열 텐서들로 읽어들인 후 단어들로 쪼개야 한다. 마지막으로
+ 그 단어들의 색인을 만들어서 정수 텐서들로 바꿔야 한다.
+- 이미지는 읽어서 정수 텐서들로 디코딩해야 한다. 그 다음 부동소수점으로 변환하고
+ 작은 값(일반적으로 0과 1 사이)으로 정규화한다.
+- CSV 데이터는 파싱해서 수치 피처는 부동소수점 텐서로 변환해야 하고
+ 범주형 피처는 색인해서 정수 텐서로 변환해야 한다.
+ 그러고 나서 보통 각 피처를 평균 0에 분산이 단위값이 되도록 정규화해야 한다.
+- 기타 등등.
 
-Before you start training a model, you will need to make your data available as one of
-these formats. If you have a large dataset and you are training on GPU(s), consider
-using `Dataset` objects, since they will take care of performance-critical details,
- such as:
+데이터 적재부터 시작해 보자.
 
-- Asynchronously preprocessing your data on CPU while your GPU is busy, and buffering
- it into a queue.
-- Prefetching data on GPU memory so it's immediately available when the GPU has
- finished processing the previous batch, so you can reach full GPU utilization.
+---
+## 데이터 적재하기
 
-Keras features a range of utilities to help you turn raw data on disk into a `Dataset`:
+케라스 모델은 세 가지 입력을 받는다.
 
-- `tf.keras.preprocessing.image_dataset_from_directory` turns image files sorted into
- class-specific folders into a labeled dataset of image tensors.
-- `tf.keras.preprocessing.text_dataset_from_directory` does the same for text files.
+- **NumPy 배열**: Scikit-Learn 및 기타 파이썬 기반 라이브러리들과 동일. 데이터가
+ 메모리에 들어가는 경우 좋은 방식이다.
+- **[텐서플로 `Dataset` 객체](https://www.tensorflow.org/guide/data)**: 메모리에
+ 들어가지 않으며 디스크나 분산 파일 시스템에서 스트림으로 가져오는 데이터셋에
+ 적합한 고성능 방식이다.
+- **파이썬 제너레이터**: (`keras.utils.Sequence`의 서브클래스 같은) 데이터 배치들을
+ 내놓는 제너레이터.
 
-In addition, the TensorFlow `tf.data` includes other similar utilities, such as
-`tf.data.experimental.make_csv_dataset` to load structured data from CSV files.
+모델 훈련을 시작하기 전에 데이터를 이 형식들 중 하나로 만들어야 할 것이다.
+데이터셋이 크고 GPU(들)에서 훈련시키려 한다면 `Dataset` 객체 사용을 고려하자.
+성능에 큰 영향을 끼치는 다음과 같은 세부 동작들을 해 준다.
 
-**Example: obtaining a labeled dataset from image files on disk**
+- GPU가 바쁜 동안 CPU에서 비동기적으로 데이터를 전처리해서 큐에 넣어 두기.
+- GPU가 앞선 배치 처리를 마쳤을 때 바로 이용할 수 있도록 GPU 메모리에 데이터를
+ 미리 올려서 GPU를 완전히 활용할 수 있게 하기.
 
-Supposed you have image files sorted by class in different folders, like this:
+케라스에는 디스크의 데이터를 `Dataset`으로 바꾸는 걸 도와 주는 다양한 유틸리티가 있다.
+
+- `tf.keras.preprocessing.image_dataset_from_directory`는 분류별 폴더에 나눠져
+ 있는 이미지 파일들을 레이블 붙은 이미지 텐서 데이터셋으로 바꿔 준다.
+- `tf.keras.preprocessing.text_dataset_from_directory`는 텍스트 파일에 대해 같은
+ 동작을 해 준다.
+
+또한 CSV 파일에서 구조화된 데이터를 적재하는 `tf.data.experimental.make_csv_dataset`
+같은 비슷한 유틸리티들이 텐서플로의 `tf.data`에 포함돼 있다.
+
+**예: 디스크의 이미지 파일들에서 레이블 붙은 데이터셋 얻기**
+
+다음처럼 분류에 따라 여러 폴더에 나눠져 있는 이미지 파일들이 있다고 하자.
 
 ```
 main_directory/
@@ -113,14 +111,14 @@ main_directory/
 ......b_image_2.jpg
 ```
 
-Then you can do:
+다음처럼 할 수 있다.
 
 ```python
-# Create a dataset.
+# 데이터셋 만들기.
 dataset = keras.preprocessing.image_dataset_from_directory(
   'path/to/main_directory', batch_size=64, image_size=(200, 200))
 
-# For demonstration, iterate over the batches yielded by the dataset.
+# 확인을 위해 데이터셋이 내놓은 배치들을 순회해 보기.
 for data, labels in dataset:
    print(data.shape)  # (64, 200, 200, 3)
    print(data.dtype)  # float32
@@ -128,21 +126,20 @@ for data, labels in dataset:
    print(labels.dtype)  # int32
 ```
 
-The label of a sample is the rank of its folder in alphanumeric order. Naturally, this
- can also be configured explicitly by passing, e.g.
-`class_names=['class_a', 'class_b']`, in which cases label `0` will be `class_a` and
- `1` will be `class_b`.
+알파벳 순서로 폴더의 순번이 표본의 레이블이 된다. 물론 예를 들어
+`class_names=['class_a', 'class_b']`라고 따로 설정할 수도 있다. 이렇게 하면
+`class_a`가 레이블 `0`이 되고 `class_b`가 레이블 `1`이 된다.
 
-**Example: obtaining a labeled dataset from text files on disk**
+**예: 디스크의 텍스트 파일에서 레이블 붙은 데이터셋 얻기**
 
-Likewise for text: if you have `.txt` documents sorted by class in different folders,
- you can do:
+텍스트도 비슷하다. 분류에 따라 여러 폴더에 나눠져 있는 `.txt` 문서들이 있다면
+다음처럼 할 수 있다.
 
 ```python
 dataset = keras.preprocessing.text_dataset_from_directory(
   'path/to/main_directory', batch_size=64)
 
-# For demonstration, iterate over the batches yielded by the dataset.
+# 확인을 위해 데이터셋이 내놓은 배치들을 순회해 보기.
 for data, labels in dataset:
    print(data.shape)  # (64,)
    print(data.dtype)  # string
@@ -153,82 +150,75 @@ for data, labels in dataset:
 
 
 ---
-## Data preprocessing with Keras
+## 케라스로 데이터 전처리하기
 
-Once your data is in the form of string/int/float NumpPy arrays, or a `Dataset` object
- (or Python generator) that yields batches of string/int/float tensors,
-it is time to **preprocess** the data. This can mean:
+데이터가 str/int/float NumPy 배열 형태 내지 str/int/float 텐서 배치들을 내놓는
+`Dataset` 객체(또는 파이썬 제너레이터)라면 이제 데이터를 **전처리**할 차례다.
+다음이 포함될 수 있다.
 
-- Tokenization of string data, followed by token indexing.
-- Feature normalization.
-- Rescaling the data to small values (in general, input values to a neural network
-should be close to zero -- typically we expect either data with zero-mean and
- unit-variance, or data in the `[0, 1]` range.
+- 문자열 데이터를 토큰들로 나누고 토큰 색인화.
+- 피처 정규화.
+- 데이터 값을 작게 줄이기. 일반적으로 신경망의 입력 값은 0에 가까워야 하며 보통
+ 평균 0에 분산이 단위값인 데이터나 범위가 `[0, 1]`인 데이터를 기대한다.
 
-### The ideal machine learning model is end-to-end
+### 완벽한 기계 학습 모델은 전구간을 처리한다
 
-In general, you should seek to do data preprocessing **as part of your model** as much
-as possible, not via an external data preprocessing pipeline. That's because external
-data preprocessing makes your models less portable when it's time to use them in
-production. Consider a model that processes text: it uses a specific tokenization
-algorithm and a specific vocabulary index. When you want to ship your model to a
-mobile app or a JavaScript app, you will need to recreate the exact same preprocessing
-setup in the target language. This can get very tricky: any small discrepancy between
-the original pipeline and the one you recreate has the potential to completely
- invalidate your model, or at least severely degrade its performance.
+가능하면 외부의 데이터 전처리 파이프라인을 통해서가 아니라 **모델의 일부로서**
+데이터 전처리를 하는 게 일반적으로 좋다. 데이터 전처리를 외부에서 하면 모델을
+실제 사용할 때 이식성이 떨어지기 때문이다. 가령 텍스트를 처리하는 어느 모델을
+생각해 보자. 그 모델에선 특정 토큰화 알고리듬과 특정 어휘 색인을 사용한다.
+모델을 모바일 앱이나 자바스크립트 앱으로 만들려고 할 때 똑같은 전처리 구성을
+그 언어로 다시 만들어야 할 것이다. 간단한 일이 아닐 수 있다. 원래 파이프라인과
+다시 만든 버전 사이에 작은 차이만 있어도 모델이 완전히 무효화되거나 적어도
+성능이 심각하게 떨어질 가능성이 있다.
 
-It would be much easier to be able to simply export an end-to-end model that already
-includes preprocessing. **The ideal model should expect as input something as close as
-possible to raw data: an image model should expect RGB pixel values in the `[0, 255]`
-range, and a text model should accept strings of `utf-8` characters.** That way, the
- consumer of the exported model doesn't have
-to know about the preprocessing pipeline.
+이미 전처리가 포함돼 있는 전구간 모델을 내놓을 수 있다면 일이 훨씬 수월할 것이다.
+**모델에서 가급적 비가공 데이터에 가까운 뭔가를 입력으로 기대하는 게 바람직하다.
+이미지 모델이라면 `[0, 255]` 범위 RGB 픽셀 값들을 기대해야 하고, 텍스트 모델이라면
+`utf-8` 문자열들을 받아들여야 한다.** 그러면 그 모델 소비자는 전처리 파이프라인에
+대해 생각할 필요가 없다.
 
-### Using Keras preprocessing layers
+### 케라스 전처리 층 사용하기
 
-In Keras, you do in-model data preprocessing via **preprocessing layers**. This
- includes:
+케라스에선 다음과 같은 **전처리 층**을 통해 모델 내 데이터 전처리를 한다.
 
-- Vectorizing raw strings of text via the `TextVectorization` layer
-- Feature normalization via the `Normalization` layer
-- Image rescaling, cropping, or image data augmentation
+- `TextVectorization` 층을 통해 텍스트의 문자열 벡터화하기
+- `Normalization` 층을 통해 피처 정규화하기
+- 이미지 크기 조정, 자르기, 이미 데이터 증강
 
-The key advantage of using Keras preprocessing layers is that **they can be included
- directly into your model**, either during training or after training,
-which makes your models portable.
+케라스 전처리 층들의 주된 장점은 훈련 중이나 훈련 후에 **모델에 직접 포함시켜서**
+모델을 이식성 있게 만들 수 있다는 점이다.
 
-Some preprocessing layers have a state:
+일부 전처리 층에는 상태가 있다.
 
-- `TextVectorization` holds an index mapping words or tokens to integer indices
-- `Normalization` holds the mean and variance of your features
+- `TextVectorization`은 단어 내지 토큰을 정수 색인으로 매핑하는 색인을 가지고 있다.
+- `Normalization`은 피처의 평균 및 분산을 가지고 있다.
 
-The state of a preprocessing layer is obtained by calling `layer.adapt(data)` on a
- sample of the training data (or all of it).
+훈련 데이터의 표본 하나(또는 전체)로 `layer.adapt(data)`를 호출하면 전처리 층의
+상태를 얻을 수 있다.
 
 
-**Example: turning strings into sequences of integer word indices**
+**예: 문자열들을 정수 단어 색인 열로 바꾸기**
 
 
 
 ```python
 from tensorflow.keras.layers import TextVectorization
 
-# Example training data, of dtype `string`.
+# dtype이 `string`인 예시 훈련 데이터
 training_data = np.array([["This is the 1st sample."], ["And here's the 2nd sample."]])
 
-# Create a TextVectorization layer instance. It can be configured to either
-# return integer token indices, or a dense token representation (e.g. multi-hot
-# or TF-IDF). The text standardization and text splitting algorithms are fully
-# configurable.
+# TextVectorization 층 인스턴스 만들기. 정수 토큰 색인들을 반환하도록,
+# 또는 조밀한 토큰 표현(가령 멀티핫이나 TF-IDF)을 반환하도록 설정할 수 있다.
+# 텍스트 표준화 알고리듬과 텍스트 분할 알고리듬도 설정 가능하다.
 vectorizer = TextVectorization(output_mode="int")
 
-# Calling `adapt` on an array or dataset makes the layer generate a vocabulary
-# index for the data, which can then be reused when seeing new data.
+# 배열이나 데이터셋으로 층의 `adapt`를 호출하면 그 데이터에 대한 어휘 색인을
+# 만든다. 이후 새 데이터에 그 색인을 재사용할 수 있다.
 vectorizer.adapt(training_data)
 
-# After calling adapt, the layer is able to encode any n-gram it has seen before
-# in the `adapt()` data. Unknown n-grams are encoded via an "out-of-vocabulary"
-# token.
+# adapt 호출을 하고 나면 앞서 `adapt()` 데이터에서 본 어떤 n그램이든 인코딩할
+# 수 있다. 모르는 n그램은 "out-of-vocalbulary" 토큰으로 인코딩한다.
 integer_data = vectorizer(training_data)
 print(integer_data)
 ```
@@ -241,28 +231,26 @@ tf.Tensor(
 
 ```
 </div>
-**Example: turning strings into sequences of one-hot encoded bigrams**
+**예: 문자열들을 원샷 인코딩 바이그램 열로 바꾸기**
 
 
 ```python
 from tensorflow.keras.layers import TextVectorization
 
-# Example training data, of dtype `string`.
+# dtype이 `string`인 예시 훈련 데이터
 training_data = np.array([["This is the 1st sample."], ["And here's the 2nd sample."]])
 
-# Create a TextVectorization layer instance. It can be configured to either
-# return integer token indices, or a dense token representation (e.g. multi-hot
-# or TF-IDF). The text standardization and text splitting algorithms are fully
-# configurable.
+# TextVectorization 층 인스턴스 만들기. 정수 토큰 색인들을 반환하도록,
+# 또는 조밀한 토큰 표현(가령 멀티핫이나 TF-IDF)을 반환하도록 설정할 수 있다.
+# 텍스트 표준화 알고리듬과 텍스트 분할 알고리듬도 설정 가능하다.
 vectorizer = TextVectorization(output_mode="binary", ngrams=2)
 
-# Calling `adapt` on an array or dataset makes the layer generate a vocabulary
-# index for the data, which can then be reused when seeing new data.
+# 배열이나 데이터셋으로 층의 `adapt`를 호출하면 그 데이터에 대한 어휘 색인을
+# 만든다. 이후 새 데이터에 그 색인을 재사용할 수 있다.
 vectorizer.adapt(training_data)
 
-# After calling adapt, the layer is able to encode any n-gram it has seen before
-# in the `adapt()` data. Unknown n-grams are encoded via an "out-of-vocabulary"
-# token.
+# adapt 호출을 하고 나면 앞서 `adapt()` 데이터에서 본 어떤 n그램이든 인코딩할
+# 수 있다. 모르는 n그램은 "out-of-vocalbulary" 토큰으로 인코딩한다.
 integer_data = vectorizer(training_data)
 print(integer_data)
 ```
@@ -275,13 +263,13 @@ tf.Tensor(
 
 ```
 </div>
-**Example: normalizing features**
+**예: 피처 정규화하기**
 
 
 ```python
 from tensorflow.keras.layers import Normalization
 
-# Example image data, with values in the [0, 255] range
+# [0, 255] 범위 값의 예시 이미지 데이터
 training_data = np.random.randint(0, 256, size=(64, 200, 200, 3)).astype("float32")
 
 normalizer = Normalization(axis=-1)
@@ -299,17 +287,17 @@ mean: -0.0000
 
 ```
 </div>
-**Example: rescaling & center-cropping images**
+**예: 이미지 값 크기 조정하고 가운데 잘라 남기기**
 
-Both the `Rescaling` layer and the `CenterCrop` layer are stateless, so it isn't
- necessary to call `adapt()` in this case.
+`Rescaling` 층과 `CenterCrop` 층 모두 상태가 없으므로 이 경우엔 `adapt()`를 호출할
+필요가 없다.
 
 
 ```python
 from tensorflow.keras.layers import CenterCrop
 from tensorflow.keras.layers import Rescaling
 
-# Example image data, with values in the [0, 255] range
+# [0, 255] 범위 값의 예시 이미지 데이터
 training_data = np.random.randint(0, 256, size=(64, 200, 200, 3)).astype("float32")
 
 cropper = CenterCrop(height=150, width=150)
@@ -330,70 +318,68 @@ max: 1.0
 ```
 </div>
 ---
-## Building models with the Keras Functional API
+## 케라스 함수형 API로 모델 만들기
 
-A "layer" is a simple input-output transformation (such as the scaling &
-center-cropping transformations above). For instance, here's a linear projection layer
- that maps its inputs to a 16-dimensional feature space:
+"층"이란 (위의 값 크기 조정 및 가운데 잘라 남기기 변환 같은) 단순한 입력-출력
+변환이다. 예를 들어 다음은 입력들을 16차원 피처 공간으로 매핑해 주는 선형 투사
+층이다.
 
 ```python
 dense = keras.layers.Dense(units=16)
 ```
 
-A "model" is a directed acyclic graph of layers. You can think of a model as a
-"bigger layer" that encompasses multiple sublayers and that can be trained via exposure
- to data.
+"모델"이란 층들로 이뤄진 방향 있는 무순환 그래프다. 여러 하위 층들을 포함하며
+데이터에 노출시켜 훈련시킬 수 있는 "큰 층"으로 생각할 수도 있다.
 
-The most common and most powerful way to build Keras models is the Functional API. To
-build models with the Functional API, you start by specifying the shape (and
-optionally the dtype) of your inputs. If any dimension of your input can vary, you can
-specify it as `None`. For instance, an input for 200x200 RGB image would have shape
-`(200, 200, 3)`, but an input for RGB images of any size would have shape `(None,
- None, 3)`.
+케라스 모델을 만드는 가장 일반적이고 가장 강력한 방법이 함수형 API다.
+함수형 API로 모델을 만들려면 먼저 입력 모양을 (그리고 선택적으로 dtype을)
+지정해 줘야 한다. 입력 중 어느 차원이 가변적이라면 `None`으로 지정하면 된다.
+예를 들어 200x200짜리 RGB 이미지 입력은 `(200, 200, 3)` 모양이 될 테고
+임의 크기의 RGB 이미지 입력은 `(None, None, 3)` 모양이 된다.
 
 
 ```python
-# Let's say we expect our inputs to be RGB images of arbitrary size
+# 입력으로 임의 크기 RGB 이미지들을 받는다고 하자
 inputs = keras.Input(shape=(None, None, 3))
 ```
 
-After defining your input(s), you can chain layer transformations on top of your inputs,
- until your final output:
+입력(들)을 지정한 다음엔 그 위로 층 변환들을 차례로 연결해서 최총 출력까지
+연결할 수 있다.
 
 
 ```python
 from tensorflow.keras import layers
 
-# Center-crop images to 150x150
+# 이미지 가운데 150x150 잘라 남기기
 x = CenterCrop(height=150, width=150)(inputs)
-# Rescale images to [0, 1]
+# 이미지 값 크기를 [0, 1]로 조정하기
 x = Rescaling(scale=1.0 / 255)(x)
 
-# Apply some convolution and pooling layers
+# 합성곱 층과 풀링 층 적용
 x = layers.Conv2D(filters=32, kernel_size=(3, 3), activation="relu")(x)
 x = layers.MaxPooling2D(pool_size=(3, 3))(x)
 x = layers.Conv2D(filters=32, kernel_size=(3, 3), activation="relu")(x)
 x = layers.MaxPooling2D(pool_size=(3, 3))(x)
 x = layers.Conv2D(filters=32, kernel_size=(3, 3), activation="relu")(x)
 
-# Apply global average pooling to get flat feature vectors
+# 전역 평균 풀링 적용해서 평면 피처 벡터 얻기
 x = layers.GlobalAveragePooling2D()(x)
 
-# Add a dense classifier on top
+# 가장 위에 조밀 분류자 추가
 num_classes = 10
 outputs = layers.Dense(num_classes, activation="softmax")(x)
 ```
 
-Once you have defined the directed acyclic graph of layers that turns your input(s) into
- your outputs, instantiate a `Model` object:
+입력(들)을 출력으로 바꿔 주는 방향 있는 무순환 층 그래프를 정의했으면
+`Model` 객체를 만들자.
 
 
 ```python
 model = keras.Model(inputs=inputs, outputs=outputs)
 ```
 
-This model behaves basically like a bigger layer. You can call it on batches of data, like
- this:
+이 모델은 기본적으로 큰 층처럼 동작한다. 다음처럼 데이터 배치들을 가지고
+호출할 수 있다.
 
 
 ```python
@@ -408,11 +394,11 @@ print(processed_data.shape)
 
 ```
 </div>
-You can print a summary of how your data gets transformed at each stage of the model.
- This is useful for debugging.
+모델 각 단계에서 데이터가 어떤 모양으로 변환되는지를 간략히 찍을 수 있다.
+디버깅에 유용하다.
 
-Note that the output shape displayed for each layer includes the **batch size**. Here
- the batch size is None, which indicates our model can process batches of any size.
+층별로 표시되는 출력 모양에는 **배치 크기**도 포함된다는 점에 유의하자.
+여기선 배치 크기가 None인데, 모델이 임의 크기의 배치를 처리할 수 있다는 뜻이다.
 
 
 ```python
@@ -452,70 +438,69 @@ _________________________________________________________________
 
 ```
 </div>
-The Functional API also makes it easy to build models that have multiple inputs (for
-instance, an image *and* its metadata) or multiple outputs (for instance, predicting
-the class of the image *and* the likelihood that a user will click on it). For a
- deeper dive into what you can do, see our
-[guide to the Functional API](/guides/functional_api/).
+함수형 API를 이용하면 입력이 여럿(예를 들어 이미지와 그 메타데이터)이거나
+출력이 여럿(예를 들어 이미지 분류 및 사용자가 클릭할 가능성을 예층)인
+모델을 만드는 게 쉬워진다. 어떤 게 가능한지 자세히 알고 싶으면 [함수형 API
+안내서](/guides/functional_api/)를 보라.
 
 ---
-## Training models with `fit()`
+## `fit()`으로 모델 훈련시키기
 
-At this point, you know:
+이제 다음을 알게 됐다.
 
-- How to prepare your data (e.g. as a NumPy array or a `tf.data.Dataset` object)
-- How to build a model that will process your data
+- 데이터를 (가령 NumPy 배열이나 `tf.data.Dataset` 객체로) 준비하는 방법
+- 데이터를 처리할 모델을 만드는 방법
 
-The next step is to train your model on your data. The `Model` class features a
-built-in training loop, the `fit()` method. It accepts `Dataset` objects, Python
- generators that yield batches of data, or NumPy arrays.
+다음은 데이터로 모델을 훈련시킬 차례다. `Model` 클래스에는 훈련 루프인
+`fit()` 메서드가 내장돼 있다. `Dataset` 객체, 데이터 배치를 내놓는
+제너레이터, NumPy 배열을 받을 수 있다.
 
-Before you can call `fit()`, you need to specify an optimizer and a loss function (we
- assume you are already familiar with these concepts). This is the `compile()` step:
+`fit()`을 호출하기 전에 먼저 최적화 기법과 손실 함수를 (이 개념들에 이미
+익숙하다고 가정한다.) 지정해야 한다. 바로 `compile()` 단계다.
 
 ```python
 model.compile(optimizer=keras.optimizers.RMSprop(learning_rate=1e-3),
               loss=keras.losses.CategoricalCrossentropy())
 ```
 
-Loss and optimizer can be specified via their string identifiers (in this case
-their default constructor argument values are used):
+문자열 식별자로 손실 함수와 최적화 기법을 지정할 수도 있다. (이 경우
+생성자 기본 인자 값들을 쓴다.)
 
 
 ```python
 model.compile(optimizer='rmsprop', loss='categorical_crossentropy')
 ```
 
-Once your model is compiled, you can start "fitting" the model to the data.
-Here's what fitting a model looks like with NumPy data:
+모델을 컴파일하고 나면 모델을 데이터에 "맞출(fit)" 수 있게 된다.
+NumPy 데이터로는 다음과 같이 모델을 맞추게 된다.
 
 ```python
 model.fit(numpy_array_of_samples, numpy_array_of_labels,
           batch_size=32, epochs=10)
 ```
 
-Besides the data, you have to specify two key parameters: the `batch_size` and
-the number of epochs (iterations on the data). Here our data will get sliced on batches
- of 32 samples, and the model will iterate 10 times over the data during training.
+데이터 외에도 두 가지 핵심 매개변수를 지정해 줘야 한다. `batch_size`와
+에포크 수(데이터 반복 횟수)다. 위와 같이 하면 데이터를 표본 32개짜리 배치들로
+나누고 훈련 동안 모델이 데이터를 10번 돌게 된다.
 
-Here's what fitting a model looks like with a dataset:
+데이터셋으로는 다음과 같이 모델을 맞추게 된다.
 
 ```python
 model.fit(dataset_of_samples_and_labels, epochs=10)
 ```
 
-Since the data yielded by a dataset is expected to be already batched, you don't need to
- specify the batch size here.
+데이터셋이 내놓는 데이터는 이미 배치들로 나눠져 있을 것이기에 배치
+크기를 지정할 필요가 없다.
 
-Let's look at it in practice with a toy example model that learns to classify MNIST
- digits:
+MNIST 숫자 분류법을 학습하는 모형 모델을 가지고 전체적으로 어떻게
+도는지를 보자.
 
 
 ```python
-# Get the data as Numpy arrays
+# Numpy 배열로 데이터 얻기
 (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-# Build a simple model
+# 간단한 모델 만들기
 inputs = keras.Input(shape=(28, 28))
 x = layers.Rescaling(1.0 / 255)(inputs)
 x = layers.Flatten()(x)
@@ -525,15 +510,15 @@ outputs = layers.Dense(10, activation="softmax")(x)
 model = keras.Model(inputs, outputs)
 model.summary()
 
-# Compile the model
+# 모델 컴파일하기
 model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
 
-# Train the model for 1 epoch from Numpy data
+# Numpy 데이터로 1 에포크만큼 모델 훈련시키기
 batch_size = 64
 print("Fit on NumPy data")
 history = model.fit(x_train, y_train, batch_size=batch_size, epochs=1)
 
-# Train the model for 1 epoch using a dataset
+# 데이터셋으로 1 에포크만큼 모델 훈련시키기
 dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(batch_size)
 print("Fit on Dataset")
 history = model.fit(dataset, epochs=1)
@@ -568,10 +553,9 @@ Fit on Dataset
 
 ```
 </div>
-The `fit()` call returns a "history" object which records what happened over the course
-of training. The `history.history` dict contains per-epoch timeseries of metrics
-values (here we have only one metric, the loss, and one epoch, so we only get a single
- scalar):
+`fit()` 호출은 훈련 과정 동안 어떤 일이 일어났는지 기록한 "이력" 객체를 반환한다.
+`history.history` 딕셔너리에는 지표들의 에포크 단위 시계열 값이 담겨 있다.
+(이번에는 지표가 손실 값 하나뿐이고 에포크도 한 번이므로 스칼라 값 하나만 있다.)
 
 
 ```python
@@ -584,19 +568,17 @@ print(history.history)
 
 ```
 </div>
-For a detailed overview of how to use `fit()`, see the
-[guide to training & evaluation with the built-in Keras methods](
-  /guides/training_with_built_in_methods/).
+[케라스 내장 메서드를 이용한 훈련과 평가 안내서](
+  /guides/training_with_built_in_methods/)에서 자세한 `fit()` 사용 방법을 볼 수 있다.
 
-### Keeping track of performance metrics
+### 성능 지표 추적하기
 
-As you're training a model, you want to keep track of metrics such as classification
-accuracy, precision, recall, AUC, etc. Besides, you want to monitor these metrics not
- only on the training data, but also on a validation set.
+모델을 훈련시키다 보면 분류 정확도, 정밀도, 재현율, AUC 등 지표들을 추적하고 싶어진다.
+또한 훈련 데이터뿐 아니라 검사용 데이터셋에 대해서도 그 지표들을 관찰하고 싶다.
 
-**Monitoring metrics**
+**지표 관찰하기**
 
-You can pass a list of metric objects to `compile()`, like this:
+다음처럼 지표 객체 목록을 `compile()`에 줄 수 있다.
 
 
 
@@ -615,10 +597,10 @@ history = model.fit(dataset, epochs=1)
 
 ```
 </div>
-**Passing validation data to `fit()`**
+**`fit()`에 검사용 데이터 주기**
 
-You can pass validation data to `fit()` to monitor your validation loss & validation
- metrics. Validation metrics get reported at the end of each epoch.
+`fit()`에 검사용 데이터를 줘서 검사 손실 및 검사 지표들을 관찰할 수 있다. 각 에포크가
+끝날 때마다 검사 지표들을 보고한다.
 
 
 ```python
@@ -632,26 +614,24 @@ history = model.fit(dataset, epochs=1, validation_data=val_dataset)
 
 ```
 </div>
-### Using callbacks for checkpointing (and more)
+### 체크포인트 등을 위해 콜백 사용하기
 
-If training goes on for more than a few minutes, it's important to save your model at
- regular intervals during training. You can then use your saved models
-to restart training in case your training process crashes (this is important for
-multi-worker distributed training, since with many workers at least one of them is
- bound to fail at some point).
+훈련 시간이 몇 분을 넘어간다면 도중에 정기적으로 모델을 저장할 필요가 있다.
+혹시라도 훈련 과정이 비정상 종료되는 경우에 저장된 모델을 이용해 훈련을
+재개할 수 있다. (다중 작업자 분산 훈련에서 중요하다. 작업 장비가 많으면
+적어도 하나는 언젠가 문제가 생기기 마련이다.)
 
-An important feature of Keras is **callbacks**, configured in `fit()`. Callbacks are
- objects that get called by the model at different point during training, in particular:
+케라스의 중요한 기능으로 `fit()`에 설정하는 **콜백**이 있다. 콜백이란
+훈련 중 다음과 같은 여러 시점에 모델에서 호출하는 객체다.
 
-- At the beginning and end of each batch
-- At the beginning and end of each epoch
+- 각 배치 시작과 끝
+- 각 에포크 시작과 끝
 
-Callbacks are a way to make model trainable entirely scriptable.
+콜백을 이용하면 모델 훈련 전체의 각본을 만들 수 있다.
 
-You can use callbacks to periodically save your model. Here's a simple example: a
- `ModelCheckpoint` callback
-configured to save the model at the end of every epoch. The filename will include the
- current epoch.
+콜백을 이용해 모델을 주기적으로 저장할 수 있다. 다음이 간단한 예인데,
+`ModelCheckpoint` 콜백을 설정해서 각 에포크 끝에서 모델을 저장하게 한다.
+파일 이름에 현재 에포크 번호가 들어가게 된다.
 
 ```python
 callbacks = [
@@ -662,23 +642,20 @@ callbacks = [
 model.fit(dataset, epochs=2, callbacks=callbacks)
 ```
 
-You can also use callbacks to do things like periodically changing the learning of your
-optimizer, streaming metrics to a Slack bot, sending yourself an email notification
- when training is complete, etc.
+콜백을 이용해 주기적으로 최적화 학습률을 바꾸거나 슬랙 봇으로 지표를 보내거나
+훈련 종료 시 이메일 알림을 보내는 것 등을 할 수도 있다.
 
-For detailed overview of what callbacks are available and how to write your own, see
-the [callbacks API documentation](/api/callbacks/) and the
-[guide to writing custom callbacks](/guides/writing_your_own_callbacks/).
+이용 가능한 콜백 종류와 자체 콜백 작성법에 대해선 [콜백 API 문서](/api/callbacks/)와
+[자체 콜백 작성하기 안내서](/guides/writing_your_own_callbacks/)를 볼 수 있다.
 
-### Monitoring training progress with TensorBoard
+### 텐서보드로 훈련 진행 상황 관찰하기
 
-Staring at the Keras progress bar isn't the most ergonomic way to monitor how your loss
- and metrics are evolving over time. There's a better solution:
-[TensorBoard](https://www.tensorflow.org/tensorboard),
-a web application that can display real-time graphs of your metrics (and more).
+케라스의 진행 막대를 쳐다보는 게 손실과 지표들의 변화를 관찰하는 가장 편안한
+방식은 아니다. 더 나은 방법이 있는데, 지표들을 실시간 그래프로 표시할 수 있는
+웹 응용인 [텐서보드](https://www.tensorflow.org/tensorboard)다.
 
-To use TensorBoard with `fit()`, simply pass a `keras.callbacks.TensorBoard` callback
- specifying the directory where to store TensorBoard logs:
+`fit()`에서 텐서보드를 이용하려면 텐서보드 로그를 저장할 디렉터리를 지정한
+`keras.callbacks.TensorBoard` 콜백을 인자로 주기만 하면 된다.
 
 
 ```python
@@ -688,25 +665,25 @@ callbacks = [
 model.fit(dataset, epochs=2, callbacks=callbacks)
 ```
 
-You can then launch a TensorBoard instance that you can open in your browser to monitor
- the logs getting written to this location:
+그러고 나면 브라우저에서 텐서보드 인스턴스를 띄워서 그 위치에 기록되는 로그들을
+관찰할 수 있다.
 
 ```
 tensorboard --logdir=./logs
 ```
 
-What's more, you can launch an in-line TensorBoard tab when training models in Jupyter
- / Colab notebooks.
-[Here's more information](https://www.tensorflow.org/tensorboard/tensorboard_in_notebooks).
+추가로 Jupyter / Colab 노트북에서 모델을 훈련시킬 때는 인라인 텐서보드 탭을
+띄울 수도 있다.
+[여기 자세한 설명이 있다](https://www.tensorflow.org/tensorboard/tensorboard_in_notebooks).
 
-### After `fit()`: evaluating test performance & generating predictions on new data
+### `fit()` 완료 후: 새 데이터로 검사 성능 평가하고 예측 생성하기
 
-Once you have a trained model, you can evaluate its loss and metrics on new data via
- `evaluate()`:
+훈련을 마친 모델이 있으면 `evaluate()`을 통해 새 데이터에 대한 손실과 지표들을
+평가할 수 있다.
 
 
 ```python
-loss, acc = model.evaluate(val_dataset)  # returns loss and metrics
+loss, acc = model.evaluate(val_dataset)  # 손실 및 지표 반환
 print("loss: %.2f" % loss)
 print("acc: %.2f" % acc)
 ```
@@ -719,8 +696,8 @@ acc: 0.97
 
 ```
 </div>
-You can also generate NumPy arrays of predictions (the activations of the output
- layer(s) in the model) via `predict()`:
+`predict()`를 통해 NumPy 배열로 된 예측(모델 출력 층(들)의 활성 값)을
+생성할 수도 있다.
 
 
 ```python
@@ -735,159 +712,151 @@ print(predictions.shape)
 ```
 </div>
 ---
-## Using `fit()` with a custom training step
+## 자체 훈련 단계로 `fit()` 사용하기
 
-By default, `fit()` is configured for **supervised learning**. If you need a different
- kind of training loop (for instance, a GAN training loop), you
-can provide your own implementation of the `Model.train_step()` method. This is the
- method that is repeatedly called during `fit()`.
+기본적으로 `fit()`은 **지도 학습**을 하게 구성돼 있다. 다른 종류의 훈련
+루프(예를 들어 GAN 훈련 루프)가 필요하다면 `Model.train_step()` 메서드를
+자체적으로 구현할 수 있다. `fit()` 수행 동안 반복해서 호출되는 메서드다.
 
-Metrics, callbacks, etc. will work as usual.
+지표, 콜백 등은 이전 그대로 동작한다.
 
-Here's a simple example that reimplements what `fit()` normally does:
+다음은 `fit()`이 원래 하는 동작을 재구현한 간단한 예시다.
 
 ```python
 class CustomModel(keras.Model):
   def train_step(self, data):
-    # Unpack the data. Its structure depends on your model and
-    # on what you pass to `fit()`.
+    # 데이터 풀기. 모델과 `fit()` 인자에 따라 그 구조가 달라진다.
     x, y = data
     with tf.GradientTape() as tape:
-      y_pred = self(x, training=True)  # Forward pass
-      # Compute the loss value
-      # (the loss function is configured in `compile()`)
+      y_pred = self(x, training=True)  # 진행
+      # 손실 값 계산
+      # (손실 함수는 `compile()`로 설정)
       loss = self.compiled_loss(y, y_pred,
                                 regularization_losses=self.losses)
-    # Compute gradients
+    # 경사 계산
     trainable_vars = self.trainable_variables
     gradients = tape.gradient(loss, trainable_vars)
-    # Update weights
+    # 가중치 갱신
     self.optimizer.apply_gradients(zip(gradients, trainable_vars))
-    # Update metrics (includes the metric that tracks the loss)
+    # 지표 갱신 (손실 추적용 지표 포함)
     self.compiled_metrics.update_state(y, y_pred)
-    # Return a dict mapping metric names to current value
+    # 지표 이름으로 현재 값 얻을 수 있는 딕셔너리 반환
     return {m.name: m.result() for m in self.metrics}
 
-# Construct and compile an instance of CustomModel
+# CustomModel 인스턴스 구성 및 컴파일
 inputs = keras.Input(shape=(32,))
 outputs = keras.layers.Dense(1)(inputs)
 model = CustomModel(inputs, outputs)
 model.compile(optimizer='adam', loss='mse', metrics=[...])
 
-# Just use `fit` as usual
+# 하던 대로 `fit` 이용
 model.fit(dataset, epochs=3, callbacks=...)
 ```
 
-For a detailed overview of how you customize the built-in training & evaluation loops,
- see the guide:
-["Customizing what happens in `fit()`"](/guides/customizing_what_happens_in_fit/).
+내장 훈련 루프와 평가 루프의 동작 방식을 바꾸는 방법에 대한 자세한 내용은
+[`fit()` 내부 동작 바꾸기](/guides/customizing_what_happens_in_fit/)를 보라.
 
 ---
-## Debugging your model with eager execution
+## 열심 실행 방식으로 모델 디버깅하기
 
-If you write custom training steps or custom layers, you will need to debug them. The
-debugging experience is an integral part of a framework: with Keras, the debugging
- workflow is designed with the user in mind.
+자체적인 훈련 단계나 층을 만들었다면 디버깅이 필요할 것이다. 디버깅 수단은
+프레임워크의 필수 요소다. 케라스에선 사용자를 고려하여 디버깅 작업 흐름이
+설계돼 있다.
 
-By default, your Keras models are compiled to highly-optimized computation graphs that
-deliver fast execution times. That means that the Python code you write (e.g. in a
-custom `train_step`) is not the code you are actually executing. This introduces a
- layer of indirection that can make debugging hard.
+기본적으로 케라스 모델은 빠른 실행을 위해서 고도로 최적화된 계산 그래프로
+컴파일되어 돈다. 즉, 여러분이 (가령 `train_step`에) 작성한 파이썬 코드가
+실제 실행되는 코드가 아니다. 이런 간접 단계가 디버깅을 어렵게 만들 수 있다.
 
-Debugging is best done step by step. You want to be able to sprinkle your code with
-`print()` statement to see what your data looks like after every operation, you want
-to be able to use `pdb`. You can achieve this by **running your model eagerly**. With
- eager execution, the Python code you write is the code that gets executed.
+디버깅은 한 단계씩 진행하며 할 수 있으면 최고다. 그래서 코드 여기저기 `print()`
+문을 집어넣어서 어떤 연산 후 데이터가 어떻게 되는지 보고 싶어 하는 것이고,
+또 그래서 `pdb`를 쓰고 싶어 하는 것이다. **모델을 열심 방식으로 돌리면**
+그럴 수 있다. 열심 실행 방식에선 작성한 파이썬 코드가 곧 실행되는 코드다.
 
-Simply pass `run_eagerly=True` to `compile()`:
+`compile()`에 `run_eagerly=True`만 주면 된다.
 
 ```python
 model.compile(optimizer='adam', loss='mse', run_eagerly=True)
 ```
 
-Of course, the downside is that it makes your model significantly slower. Make sure to
-switch it back off to get the benefits of compiled computation graphs once you are
- done debugging!
+단점은 당연히 모델이 상당히 느려진다는 점이다. 디버깅을 마쳤으면 꼭 원래대로
+되돌려서 컴파일된 계산 그래프의 장점을 누리자.
 
-In general, you will use `run_eagerly=True` every time you need to debug what's
- happening inside your `fit()` call.
+일반적으로 `fit()` 호출 내에서 일어나는 뭔가를 디버깅해야 할 때마다
+`run_eagerly=True`를 쓰게 될 것이다.
 
 ---
-## Speeding up training with multiple GPUs
+## 여러 GPU로 훈련 속도 높이기
 
-Keras has built-in industry-strength support for multi-GPU training and distributed
- multi-worker training, via the `tf.distribute` API.
+케라스에는 `tf.distribute` API를 통해 업계 수준의 다중 GPU 훈련과
+분산 다중 장비 훈련을 지원한다.
 
-If you have multiple GPUs on your machine, you can train your model on all of them by:
+머신에 여러 GPU가 있다면 다음처럼 해서 모든 GPU에서 모델을 훈련시킬 수 있다.
 
-- Creating a `tf.distribute.MirroredStrategy` object
-- Building & compiling your model inside the strategy's scope
-- Calling `fit()` and `evaluate()` on a dataset as usual
+- `tf.distribute.MirroredStrategy` 객체 생성
+- 전략의 스코프 안에서 모델을 만들고 컴파일
+- 평소처럼 데이터셋으로 `fit()` 및 `evaluate()` 호출
 
 ```python
-# Create a MirroredStrategy.
+# MirroredStrategy 만들기
 strategy = tf.distribute.MirroredStrategy()
 
-# Open a strategy scope.
+# 전략 스코프 열기
 with strategy.scope():
-  # Everything that creates variables should be under the strategy scope.
-  # In general this is only model construction & `compile()`.
+  # 변수를 만드는 모든 동작이 전략 스코프 안에 있어야 한다.
+  # 일반적으로 모델 구성과 `compile()`만 그에 해당한다.
   model = Model(...)
   model.compile(...)
 
-# Train the model on all available devices.
+# 모든 가용 장치에서 모델 훈련시키기
 train_dataset, val_dataset, test_dataset = get_dataset()
 model.fit(train_dataset, epochs=2, validation_data=val_dataset)
 
-# Test the model on all available devices.
+# 모든 가용 장치에서 모델 검사하기
 model.evaluate(test_dataset)
 ```
 
-For a detailed introduction to multi-GPU & distributed training, see
-[this guide](/guides/distributed_training/).
+다중 GPU 및 분산 훈련에 대한 자세한 소개는
+[이 안내서](/guides/distributed_training/)를 보라.
 
 ---
-## Doing preprocessing synchronously on-device vs. asynchronously on host CPU
+## 전처리를 장치에서 동기적으로, 또는 호스트 CPU에서 비동기적으로 하기
 
-You've learned about preprocessing, and you've seen example where we put image
- preprocessing layers (`CenterCrop` and `Rescaling`) directly inside our model.
+앞서 전처리에 대해 배우면서 이미지 전처리 층들(`CenterCrop`과 `Rescaling`)을
+모델 안에 직접 집어넣는 예시를 살펴봤다.
 
-Having preprocessing happen as part of the model during training
-is great if you want to do on-device preprocessing, for instance, GPU-accelerated
-feature normalization or image augmentation. But there are kinds of preprocessing that
-are not suited to this setup: in particular, text preprocessing with the
-`TextVectorization` layer. Due to its sequential nature and due to the fact that it
- can only run on CPU, it's often a good idea to do **asynchronous preprocessing**.
+장치 상에서 전처리를 하고 싶다면, 예를 들어 GPU 가속으로 피처 정규화나 이미지
+증강을 하고 싶다면 훈련 동안 모델의 일부로서 전처리가 이뤄지게 하는 게 최고다.
+하지만 그런 구성에 적합하지 않은 종류의 전처리가 있다. 특히 `TextVectorization`
+층을 이용한 텍스트 전처리가 그렇다. 순차적 동작 특성과 CPU에서만 돌 수 있다는
+점 때문에 **비동기 전처리**가 나은 경우가 많다.
 
-With asynchronous preprocessing, your preprocessing operations will run on CPU, and the
-preprocessed samples will be buffered into a queue while your GPU is busy with
-previous batch of data. The next batch of preprocessed samples will then be fetched
-from the queue to the GPU memory right before the GPU becomes available again
-(prefetching). This ensures that preprocessing will not be blocking and that your GPU
- can run at full utilization.
+비동기 전처리 방식에선 전처리 연산들이 CPU에서 돌게 되고, GPU에서 앞선 데이터
+배치를 처리하느라 바쁜 동안 전처리한 표본들이 큐에 버퍼링된다. 그리고 다시
+GPU가 한가해지기 바로 전에 전처리된 다음 차례 표본 배치가 큐에서 GPU 메모리로
+옮겨지게 된다. 전처리가 진행을 막지 않게 되므로 GPU를 최대한으로 돌릴 수 있다.
 
-To do asynchronous preprocessing, simply use `dataset.map` to inject a preprocessing
- operation into your data pipeline:
+비동기 전처리를 하려면 `data.map`을 이용해 데이터 파이프라인에 전처리
+동작을 끼워넣어 주기만 하면 된다.
 
 
 ```python
-# Example training data, of dtype `string`.
+# dtype이 `string`인 예시 훈련 데이터
 samples = np.array([["This is the 1st sample."], ["And here's the 2nd sample."]])
 labels = [[0], [1]]
 
-# Prepare a TextVectorization layer.
+# TextVectorization 층 준비
 vectorizer = TextVectorization(output_mode="int")
 vectorizer.adapt(samples)
 
-# Asynchronous preprocessing: the text vectorization is part of the tf.data pipeline.
-# First, create a dataset
+# 비동기 전처리: 텍스트 벡터화가 tf.data 파이프라인의 일부로서 이뤄진다.
+# 데이터셋 생성
 dataset = tf.data.Dataset.from_tensor_slices((samples, labels)).batch(2)
-# Apply text vectorization to the samples
+# 표본에 텍스트 벡터화 적용
 dataset = dataset.map(lambda x, y: (vectorizer(x), y))
-# Prefetch with a buffer size of 2 batches
+# 배치 2개 크기 버퍼로 미리 옮겨 두기
 dataset = dataset.prefetch(2)
 
-# Our model should expect sequences of integers as inputs
+# 모델 입력으로 정수 열을 받아야 한다.
 inputs = keras.Input(shape=(None,), dtype="int64")
 x = layers.Embedding(input_dim=10, output_dim=32)(inputs)
 outputs = layers.Dense(1)(x)
@@ -905,14 +874,14 @@ model.fit(dataset)
 
 ```
 </div>
-Compare this to doing text vectorization as part of the model:
+이를 모델의 일부로서 텍스트 벡터화를 하는 방식과 비교해 보자.
 
 
 ```python
-# Our dataset will yield samples that are strings
+# 데이터셋은 문자열 표본들을 내놓을 것이다.
 dataset = tf.data.Dataset.from_tensor_slices((samples, labels)).batch(2)
 
-# Our model should expect strings as inputs
+# 모델 입력으로 문자열을 받아야 한다.
 inputs = keras.Input(shape=(1,), dtype="string")
 x = vectorizer(inputs)
 x = layers.Embedding(input_dim=10, output_dim=32)(x)
@@ -931,13 +900,12 @@ model.fit(dataset)
 
 ```
 </div>
-When training text models on CPU, you will generally not see any performance difference
-between the two setups. When training on GPU, however, doing asynchronous buffered
-preprocessing on the host CPU while the GPU is running the model itself can result in
- a significant speedup.
+CPU에서 텍스트 모델을 훈련시킬 때는 일반적으로 두 구성의 성능 차이가 눈에 띄지
+않을 것이다. 하지만 GPU에서 훈련시킬 때는 GPU에서 모델을 돌리는 동안 호스트
+CPU에서 비동기 버퍼링 전처리를 하는 게 상당한 성능 향상을 가져올 수 있다.
 
-After training, if you want to export an end-to-end model that includes the preprocessing
- layer(s), this is easy to do, since `TextVectorization` is a layer:
+훈련 후에 전처리 층(들)을 포함한 전구간 모델을 얻고 싶다면 쉽게 가능하다.
+`TextVectorization`이 층이기 때문이다.
 
 ```python
 inputs = keras.Input(shape=(1,), dtype='string')
@@ -947,21 +915,20 @@ end_to_end_model = keras.Model(inputs, outputs)
 ```
 
 ---
-## Finding the best model configuration with hyperparameter tuning
+## 하이퍼파라미터 조정으로 최적의 모델 구성 찾기
 
-Once you have a working model, you're going to want to optimize its configuration --
-architecture choices, layer sizes, etc. Human intuition can only go so far, so you'll
- want to leverage a systematic approach: hyperparameter search.
+잘 동작하는 모델이 갖춰지고 나면 그 구성(여러 구조적 선택, 층 크기 등)을
+최적화하고 싶을 것이다. 사람의 직감은 어느 정도까지만 통하기 때문에 이제는
+체계적인 방법을 써야 하는데, 바로 하이퍼파라미터 탐색을 활용할 때다.
 
-You can use
-[KerasTuner](/api/keras_tuner/tuners/) to find
- the best hyperparameter for your Keras models. It's as easy as calling `fit()`.
+[KerasTuner](/api/keras_tuner/tuners/)를 이용해 케라스 모델에
+최적인 하이퍼파라미터를 찾을 수 있다. `fit()` 호출만큼이나 간단하다.
 
-Here how it works.
+이용 방식은 다음과 같다.
 
-First, place your model definition in a function, that takes a single `hp` argument.
-Inside this function, replace any value you want to tune with a call to hyperparameter
- sampling methods, e.g. `hp.Int()` or `hp.Choice()`:
+첫째로, `hp` 인자만 받는 함수를 만들어서 모델 정의를 그리 옮긴다. 그리고
+조정하려는 값들을 `hp.Int()`나 `hp.Choice()` 같은 하이퍼파라미터 값 제공
+메서드로 바꾼다.
 
 ```python
 def build_model(hp):
@@ -980,10 +947,9 @@ def build_model(hp):
     return model
 ```
 
-The function should return a compiled model.
+그 함수는 컴파일된 모델을 반환해야 한다.
 
-Next, instantiate a tuner object specifying your optimization objective and other search
- parameters:
+다음으로, 최적화 목표와 여타 탐색 매개변수들을 지정해서 튜너 객체를 만든다.
 
 
 ```python
@@ -998,46 +964,39 @@ tuner = keras_tuner.tuners.Hyperband(
   directory='my_dir')
 ```
 
-Finally, start the search with the `search()` method, which takes the same arguments as
- `Model.fit()`:
+마지막으로, `search()` 메서드로 탐색을 시작한다. `Model.fit()`과 같은 인자들을 받는다.
 
 ```python
 tuner.search(dataset, validation_data=val_dataset)
 ```
 
-When search is over, you can retrieve the best model(s):
+탐색이 끝났으면 다음처럼 최적 모델(들)을 얻을 수 있다.
 
 ```python
 models = tuner.get_best_models(num_models=2)
 ```
 
-Or print a summary of the results:
+또는 결과 요약 정보를 찍을 수 있다.
 
 ```python
 tuner.results_summary()
 ```
 
 ---
-## End-to-end examples
+## 전구간 예시
 
-To familiarize yourself with the concepts in this introduction, see the following
- end-to-end examples:
+이 소개서의 개념들에 익숙해지도록 다음과 같은 전구간 예시들을 살펴보자.
 
-- [Text classification](/examples/nlp/text_classification_from_scratch/)
-- [Image classification](/examples/vision/image_classification_from_scratch/)
-- [Credit card fraud detection](/examples/structured_data/imbalanced_classification/)
+- [텍스트 분류](/examples/nlp/text_classification_from_scratch/)
+- [이미지 분류](/examples/vision/image_classification_from_scratch/)
+- [신용카드 부정사용 탐지](/examples/structured_data/imbalanced_classification/)
 
 ---
-## What to learn next
+## 다음으로 배울 것들
 
-- Learn more about the
-[Functional API](/guides/functional_api/).
-- Learn more about the
-[features of `fit()` and `evaluate()`](/guides/training_with_built_in_methods/).
-- Learn more about
-[callbacks](/guides/writing_your_own_callbacks/).
-- Learn more about
-[creating your own custom training steps](/guides/customizing_what_happens_in_fit/).
-- Learn more about
-[multi-GPU and distributed training](/guides/distributed_training/).
-- Learn how to do [transfer learning](/guides/transfer_learning/).
+- [함수형 API](/guides/functional_api/) 더 배우기.
+- [`fit()`과 `evaluate()`의 기능](/guides/training_with_built_in_methods/) 더 배우기.
+- [콜백](/guides/writing_your_own_callbacks/) 더 배우기.
+- [자체 훈련 단계 만들기](/guides/customizing_what_happens_in_fit/) 더 배우기.
+- [다중 GPU 훈련과 분산 훈련](/guides/distributed_training/) 더 배우기.
+- [전이 학습](/guides/transfer_learning/) 하는 법 배우기.

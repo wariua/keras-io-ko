@@ -15,27 +15,27 @@ MASTER = {
         {"path": "about", "title": "케라스에 대해"},  # TODO
         {
             "path": "getting_started/",
-            "title": "Getting started",
+            "title": "시작하기",
             "children": [
                 {
                     "path": "intro_to_keras_for_engineers",
-                    "title": "Introduction to Keras for engineers",
+                    "title": "엔지니어를 위한 케라스 소개",
                 },
                 {
                     "path": "intro_to_keras_for_researchers",
-                    "title": "Introduction to Keras for researchers",
+                    "title": "연구자를 위한 케라스 소개",
                 },
                 {
                     "path": "ecosystem",
-                    "title": "The Keras ecosystem",
+                    "title": "케라스 생태계",
                 },
                 {
                     "path": "learning_resources",
-                    "title": "Learning resources",
+                    "title": "학습 자료",
                 },
                 {
                     "path": "faq",
-                    "title": "Frequently Asked Questions",
+                    "title": "자주 묻는 질문",
                     "outline": False,
                 },
             ],
