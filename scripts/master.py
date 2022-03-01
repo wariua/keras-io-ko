@@ -12,7 +12,7 @@ MASTER = {
     "path": "/",
     "title": "케라스: 파이썬 딥 러닝 라이브러리",
     "children": [
-        {"path": "about", "title": "About Keras"},  # TODO
+        {"path": "about", "title": "케라스에 대해"},  # TODO
         {
             "path": "getting_started/",
             "title": "Getting started",
