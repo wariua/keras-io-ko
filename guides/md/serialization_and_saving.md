@@ -1,17 +1,17 @@
-# Serialization and saving
+# 직렬화와 저장
 
-**Authors:** Kathy Wu, Francois Chollet<br>
-**Date created:** 2020/04/28<br>
-**Last modified:** 2020/04/28<br>
-**Description:** Complete guide to saving & serializing models.
+**작성자:** Kathy Wu, Francois Chollet<br>
+**생성 날짜:** 2020/04/28<br>
+**최근 변경:** 2020/04/28<br>
+**설명:** 모델 저장과 직렬화에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/serialization_and_saving.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/serialization_and_saving.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/serialization_and_saving.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/serialization_and_saving.py)
 
 
 
 ---
-## Introduction
+## 소개
 
 A Keras model consists of multiple components:
 
@@ -34,7 +34,7 @@ Let's take a look at each of these options. When would you use one or the other,
 and how do they work?
 
 ---
-## How to save and load a model
+## 모델 저장하고 적재하기
 
 If you only have 10 seconds to read this guide, here's what you need to know.
 
@@ -55,7 +55,7 @@ model = keras.models.load_model('path/to/location')
 Now, let's look at the details.
 
 ---
-## Setup
+## 준비
 
 
 ```python

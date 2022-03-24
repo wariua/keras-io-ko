@@ -1,17 +1,17 @@
-# Multi-GPU and distributed training
+# 다중 GPU 훈련과 분산 훈련
 
-**Author:** [fchollet](https://twitter.com/fchollet)<br>
-**Date created:** 2020/04/28<br>
-**Last modified:** 2020/04/29<br>
-**Description:** Guide to multi-GPU & distributed training for Keras models.
+**작성자:** [fchollet](https://twitter.com/fchollet)<br>
+**생성 날짜:** 2020/04/28<br>
+**최근 변경:** 2020/04/29<br>
+**설명:** 케라스 모델 다중 GPU 훈련 및 분산 훈련에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/distributed_training.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/distributed_training.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/distributed_training.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/distributed_training.py)
 
 
 
 ---
-## Introduction
+## 소개
 
 There are generally two ways to distribute computation across multiple devices:
 
@@ -43,7 +43,7 @@ training high-resolution image classification models on tens of millions of imag
 
 
 ---
-## Setup
+## 준비
 
 
 ```python

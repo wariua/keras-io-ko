@@ -1,12 +1,12 @@
-# Understanding masking & padding
+# 마스킹과 패딩 이해하기
 
-**Authors:** Scott Zhu, Francois Chollet<br>
-**Date created:** 2019/07/16<br>
-**Last modified:** 2020/04/14<br>
-**Description:** Complete guide to using mask-aware sequence layers in Keras.
+**작성자:** Scott Zhu, Francois Chollet<br>
+**생성 날짜:** 2019/07/16<br>
+**최근 변경:** 2020/04/14<br>
+**설명:** Complete guide to using mask-aware sequence layers in Keras.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/understanding_masking_and_padding.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/understanding_masking_and_padding.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/understanding_masking_and_padding.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/understanding_masking_and_padding.py)
 
 
 

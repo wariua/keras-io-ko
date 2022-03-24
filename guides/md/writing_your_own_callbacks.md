@@ -1,17 +1,17 @@
-# Writing your own callbacks
+# 자체 콜백 작성하기
 
-**Authors:** Rick Chao, Francois Chollet<br>
-**Date created:** 2019/03/20<br>
-**Last modified:** 2020/07/12<br>
-**Description:** Complete guide to writing new Keras callbacks.
+**작성자:** Rick Chao, Francois Chollet<br>
+**생성 날짜:** 2019/03/20<br>
+**최근 변경:** 2020/07/12<br>
+**설명:** 케라스 콜백 작성에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/writing_your_own_callbacks.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/writing_your_own_callbacks.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/writing_your_own_callbacks.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/writing_your_own_callbacks.py)
 
 
 
 ---
-## Introduction
+## 소개
 
 A callback is a powerful tool to customize the behavior of a Keras model during
 training, evaluation, or inference. Examples include `tf.keras.callbacks.TensorBoard`
@@ -23,7 +23,7 @@ build your own. We provide a few demos of simple callback applications to get yo
 started.
 
 ---
-## Setup
+## 준비
 
 
 ```python

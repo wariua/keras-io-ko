@@ -1,17 +1,17 @@
-# Writing a training loop from scratch
+# 훈련 루프 바닥부터 작성하기
 
-**Author:** [fchollet](https://twitter.com/fchollet)<br>
-**Date created:** 2019/03/01<br>
-**Last modified:** 2020/04/15<br>
-**Description:** Complete guide to writing low-level training & evaluation loops.
+**작성자:** [fchollet](https://twitter.com/fchollet)<br>
+**생성 날짜:** 2019/03/01<br>
+**최근 변경:** 2020/04/15<br>
+**설명:** 저수준 훈련 및 평가 루프 작성에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/writing_a_training_loop_from_scratch.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/writing_a_training_loop_from_scratch.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/writing_a_training_loop_from_scratch.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/writing_a_training_loop_from_scratch.py)
 
 
 
 ---
-## Setup
+## 준비
 
 
 ```python
@@ -22,7 +22,7 @@ import numpy as np
 ```
 
 ---
-## Introduction
+## 소개
 
 Keras provides default training and evaluation loops, `fit()` and `evaluate()`.
 Their usage is covered in the guide

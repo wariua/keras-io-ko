@@ -1,17 +1,17 @@
-# The Sequential model
+# 순차형 모델
 
-**Author:** [fchollet](https://twitter.com/fchollet)<br>
-**Date created:** 2020/04/12<br>
-**Last modified:** 2020/04/12<br>
-**Description:** Complete guide to the Sequential model.
+**작성자:** [fchollet](https://twitter.com/fchollet)<br>
+**생성 날짜:** 2020/04/12<br>
+**최근 변경:** 2020/04/12<br>
+**설명:** 순차형 모델에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/sequential_model.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/sequential_model.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/sequential_model.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/sequential_model.py)
 
 
 
 ---
-## Setup
+## 준비
 
 
 ```python
@@ -21,16 +21,16 @@ from tensorflow.keras import layers
 ```
 
 ---
-## When to use a Sequential model
+## 순차형 모델을 써야 할 때
 
-A `Sequential` model is appropriate for **a plain stack of layers**
-where each layer has **exactly one input tensor and one output tensor**.
+`Sequential` 모델은 **입력 텐서와 출력 텐서가 딱 1개씩인**
+**층들을 평범하게 순차 연결**한 경우에 적합하다.
 
-Schematically, the following `Sequential` model:
+개략적으로 다음 `Sequential` 모델이
 
 
 ```python
-# Define Sequential model with 3 layers
+# 층 3개짜리 순차형 모델 정의
 model = keras.Sequential(
     [
         layers.Dense(2, activation="relu", name="layer1"),
@@ -38,38 +38,36 @@ model = keras.Sequential(
         layers.Dense(4, name="layer3"),
     ]
 )
-# Call model on a test input
+# 테스트 입력으로 모델 호출
 x = tf.ones((3, 3))
 y = model(x)
 ```
 
-is equivalent to this function:
+다음 함수와 동등하다.
 
 
 ```python
-# Create 3 layers
+# 층 3개 만들기
 layer1 = layers.Dense(2, activation="relu", name="layer1")
 layer2 = layers.Dense(3, activation="relu", name="layer2")
 layer3 = layers.Dense(4, name="layer3")
 
-# Call layers on a test input
+# 텍스트 입력으로 층들 호출
 x = tf.ones((3, 3))
 y = layer3(layer2(layer1(x)))
 ```
 
-A Sequential model is **not appropriate** when:
+다음 경우에는 순차형 모델이 **적합하지 않다**.
 
-- Your model has multiple inputs or multiple outputs
-- Any of your layers has multiple inputs or multiple outputs
-- You need to do layer sharing
-- You want non-linear topology (e.g. a residual connection, a multi-branch
-model)
+- 모델 입력이나 출력이 여러 개다.
+- 어느 층에서든 입력이나 출력이 여러 개다.
+- 층 공유를 해야 한다.
+- 비선형 구조(예: 잔여 연결, 다분기 모델)가 필요하다.
 
 ---
-## Creating a Sequential model
+## 순차형 모델 만들기
 
-You can create a Sequential model by passing a list of layers to the Sequential
-constructor:
+Sequential 생성자에 층들의 목록을 줘서 순차형 모델을 만들 수 있다.
 
 
 ```python
@@ -82,7 +80,7 @@ model = keras.Sequential(
 )
 ```
 
-Its layers are accessible via the `layers` attribute:
+`layers` 속성을 통해 그 층들에 접근할 수 있다.
 
 
 ```python
@@ -100,7 +98,7 @@ model.layers
 
 ```
 </div>
-You can also create a Sequential model incrementally via the `add()` method:
+`add()` 메서드를 통해 점진적으로 순차형 모델을 만들 수도 있다.
 
 
 ```python
@@ -110,8 +108,8 @@ model.add(layers.Dense(3, activation="relu"))
 model.add(layers.Dense(4))
 ```
 
-Note that there's also a corresponding `pop()` method to remove layers:
-a Sequential model behaves very much like a list of layers.
+그에 대응하는 `pop()` 메서드로 층을 제거할 수도 있다.
+순차형 모델은 층들의 리스트와 아주 비슷하게 동작한다.
 
 
 ```python
@@ -125,9 +123,9 @@ print(len(model.layers))  # 2
 
 ```
 </div>
-Also note that the Sequential constructor accepts a `name` argument, just like
-any layer or model in Keras. This is useful to annotate TensorBoard graphs
-with semantically meaningful names.
+또한 케라스의 여느 층이나 모델과 마찬가지로 Sequential 생성자도
+`name` 인자를 받는다. 이를 이용해 텐서보드 그래프에 의미 있는 이름을
+표시할 수 있다.
 
 
 ```python
@@ -138,16 +136,15 @@ model.add(layers.Dense(4, name="layer3"))
 ```
 
 ---
-## Specifying the input shape in advance
+## 입력 형태 미리 지정하기
 
-Generally, all layers in Keras need to know the shape of their inputs
-in order to be able to create their weights. So when you create a layer like
-this, initially, it has no weights:
+일반적으로 케라스의 모든 층들은 입력의 형태를 알아야 가중치를
+만들 수 있다. 따라서 다음처럼 층을 만들었을 때 처음에는 가중치가 없다.
 
 
 ```python
 layer = layers.Dense(3)
-layer.weights  # Empty
+layer.weights  # 비어 있음
 ```
 
 
@@ -159,15 +156,15 @@ layer.weights  # Empty
 
 ```
 </div>
-It creates its weights the first time it is called on an input, since the shape
-of the weights depends on the shape of the inputs:
+입력 형태에 따라 가중치의 형태가 정해지므로 입력을 가지고
+층을 처음 호출할 때 가중치가 만들어진다.
 
 
 ```python
-# Call layer on a test input
+# 테스트 입력으로 층 호출하기
 x = tf.ones((1, 4))
 y = layer(x)
-layer.weights  # Now it has weights, of shape (4, 3) and (3,)
+layer.weights  # (4, 3) 및 (3,) 형태의 가중치가 생겼다
 ```
 
 
@@ -184,11 +181,10 @@ layer.weights  # Now it has weights, of shape (4, 3) and (3,)
 
 ```
 </div>
-Naturally, this also applies to Sequential models. When you instantiate a
-Sequential model without an input shape, it isn't "built": it has no weights
-(and calling
-`model.weights` results in an error stating just this). The weights are created
-when the model first sees some input data:
+당연히 순차형 모델에서도 그렇다. 입력 형태 없이 순차형 모델 인스턴스를
+만들면 모델이 "구축"되지 않는다. 즉, 가중치가 없다.
+(그래서 `model.weights`를 호출하면 오류가 난다.)
+모델에 어떤 입력 데이터가 처음 들어갈 때 가중치들이 만들어진다.
 
 
 ```python
@@ -198,15 +194,15 @@ model = keras.Sequential(
         layers.Dense(3, activation="relu"),
         layers.Dense(4),
     ]
-)  # No weights at this stage!
+)  # 이 단계에선 가중치가 없다
 
-# At this point, you can't do this:
+# 이때 다음이 불가능하다
 # model.weights
 
-# You also can't do this:
+# 다음도 불가능하다
 # model.summary()
 
-# Call the model on a test input
+# 테스트 입력으로 모델 호출하기
 x = tf.ones((1, 4))
 y = model(x)
 print("Number of weights after calling the model:", len(model.weights))  # 6
@@ -218,8 +214,8 @@ Number of weights after calling the model: 6
 
 ```
 </div>
-Once a model is "built", you can call its `summary()` method to display its
-contents:
+모델이 "구축"되고 나면 `summary()` 메서드를 호출해서
+모델 내용을 표시할 수 있다.
 
 
 ```python
@@ -245,10 +241,10 @@ _________________________________________________________________
 
 ```
 </div>
-However, it can be very useful when building a Sequential model incrementally
-to be able to display the summary of the model so far, including the current
-output shape. In this case, you should start your model by passing an `Input`
-object to your model, so that it knows its input shape from the start:
+하지만 순차형 모델을 점진적으로 구축할 때 지금까지 만든 모델의 요약 정보를
+현재 출력 형태까지 포함해서 표시할 수 있다면 굉장히 편리한 경우가 있다.
+그럴 때는 모델 구축을 시작할 때 모델에 `Input` 객체를 줄 수 있다.
+그러면 처음부터 입력 형태를 알게 된다.
 
 
 ```python
@@ -274,8 +270,8 @@ _________________________________________________________________
 
 ```
 </div>
-Note that the `Input` object is not displayed as part of `model.layers`, since
-it isn't a layer:
+보다시피 `Input` 객체는 `model.layers` 표시 내용에 포함되지 않는다.
+층이 아니기 때문이다.
 
 
 ```python
@@ -291,8 +287,7 @@ model.layers
 
 ```
 </div>
-A simple alternative is to just pass an `input_shape` argument to your first
-layer:
+또 다른 방법은 첫 번째 층에 `input_shape` 인자를 주는 것이다.
 
 
 ```python
@@ -317,33 +312,33 @@ _________________________________________________________________
 
 ```
 </div>
-Models built with a predefined input shape like this always have weights (even
-before seeing any data) and always have a defined output shape.
+이렇게 미리 정해진 입력 형태로 구축한 모델들은 항상 (데이터를 받기 전부터)
+가중치를 가지고 있으며 항상 출력 형태가 정해져 있다.
 
-In general, it's a recommended best practice to always specify the input shape
-of a Sequential model in advance if you know what it is.
+일반적으로 입력 형태를 알고 있다면 순차형 모델에서 항상 입력 형태를
+미리 지정해 주기를 권장한다.
 
 ---
-## A common debugging workflow: `add()` + `summary()`
+## 일반적인 디버깅 흐름: `add()` + `summary()`
 
-When building a new Sequential architecture, it's useful to incrementally stack
-layers with `add()` and frequently print model summaries. For instance, this
-enables you to monitor how a stack of `Conv2D` and `MaxPooling2D` layers is
-downsampling image feature maps:
+순차형 구조를 새로 구축할 때 `add()`를 써서 점진적으로 층을 쌓아가면서
+자주 모델 요약 정보를 찍어 보는 게 도움이 된다. 예를 들어 다음처럼
+`Conv2D` 및 `MaxPooling2D` 층들이 이미지 피처 맵을 얼마나 다운샘플링
+하는지 확인해 볼 수 있다.
 
 
 ```python
 model = keras.Sequential()
-model.add(keras.Input(shape=(250, 250, 3)))  # 250x250 RGB images
+model.add(keras.Input(shape=(250, 250, 3)))  # 250x250 RGB 이미지
 model.add(layers.Conv2D(32, 5, strides=2, activation="relu"))
 model.add(layers.Conv2D(32, 3, activation="relu"))
 model.add(layers.MaxPooling2D(3))
 
-# Can you guess what the current output shape is at this point? Probably not.
-# Let's just print it:
+# 현재 출력 형태가 뭔지 알 수 있겠는가? 어려울 것이다.
+# 찍어 보자.
 model.summary()
 
-# The answer was: (40, 40, 32), so we can keep downsampling...
+# 답은 (40, 40, 32), 따라서 다운샘플링을 더 할 수 있다....
 
 model.add(layers.Conv2D(32, 3, activation="relu"))
 model.add(layers.Conv2D(32, 3, activation="relu"))
@@ -352,13 +347,13 @@ model.add(layers.Conv2D(32, 3, activation="relu"))
 model.add(layers.Conv2D(32, 3, activation="relu"))
 model.add(layers.MaxPooling2D(2))
 
-# And now?
+# 지금은?
 model.summary()
 
-# Now that we have 4x4 feature maps, time to apply global max pooling.
+# 이제 4x4 피처 맵을 얻었으니 전역 최대 풀링을 적용할 차례다.
 model.add(layers.GlobalMaxPooling2D())
 
-# Finally, we add a classification layer.
+# 마지막으로 분류 층을 추가한다.
 model.add(layers.Dense(10))
 ```
 
@@ -407,31 +402,29 @@ _________________________________________________________________
 
 ```
 </div>
-Very practical, right?
+아주 유용하다. 안 그런가?
 
 
 ---
-## What to do once you have a model
+## 모델을 만들고 나서 할 수 있는 일
 
-Once your model architecture is ready, you will want to:
+모델 구조가 준비되고 나면 다음을 해 볼 수 있다.
 
-- Train your model, evaluate it, and run inference. See our
-[guide to training & evaluation with the built-in loops](
-    /guides/training_with_built_in_methods/)
-- Save your model to disk and restore it. See our
-[guide to serialization & saving](/guides/serialization_and_saving/).
-- Speed up model training by leveraging multiple GPUs. See our
-[guide to multi-GPU and distributed training](/guides/distributed_training/).
+- 모델 훈련시키고, 평가하고, 추론 돌리기.
+[내장 루프를 이용한 훈련 및 평가 안내서](
+    /guides/training_with_built_in_methods/) 참고
+- 모델을 디스크에 저장하고 복원하기.
+[직렬화와 저장 안내서](/guides/serialization_and_saving/) 참고.
+- 여러 GPU 활용해서 모델 훈련 속도 높이기.
+[다중 GPU 훈련과 분산 훈련 안내서](/guides/distributed_training/) 참고.
 
 ---
-## Feature extraction with a Sequential model
+## 순차형 모델과 피처 추출
 
-Once a Sequential model has been built, it behaves like a [Functional API
-model](/guides/functional_api/). This means that every layer has an `input`
-and `output` attribute. These attributes can be used to do neat things, like
-quickly
-creating a model that extracts the outputs of all intermediate layers in a
-Sequential model:
+일단 순차형 모델을 구축하고 나면 [함수형 API 모델](/guides/functional_api/)과
+비슷하게 동작한다. 그래서 층마다 `input` 속성과 `output` 속성이 있는데,
+이 속성들을 이용해 재밌는 걸 할 수 있다. 예를 들어 순차 모델
+중간 층들의 출력을 모두 추출하는 모델을 금방 만들 수 있다.
 
 
 ```python
@@ -448,12 +441,12 @@ feature_extractor = keras.Model(
     outputs=[layer.output for layer in initial_model.layers],
 )
 
-# Call feature extractor on test input.
+# 테스트 입력으로 피처 추출기 호출하기
 x = tf.ones((1, 250, 250, 3))
 features = feature_extractor(x)
 ```
 
-Here's a similar example that only extract features from one layer:
+다음은 한 층에서만 피처들을 추출하는 비슷한 예시다.
 
 
 ```python
@@ -469,24 +462,23 @@ feature_extractor = keras.Model(
     inputs=initial_model.inputs,
     outputs=initial_model.get_layer(name="my_intermediate_layer").output,
 )
-# Call feature extractor on test input.
+# 테스트 입력으로 피처 추출기 호출하기
 x = tf.ones((1, 250, 250, 3))
 features = feature_extractor(x)
 ```
 
 ---
-## Transfer learning with a Sequential model
+## 순차형 모델과 전이 학습
 
-Transfer learning consists of freezing the bottom layers in a model and only training
-the top layers. If you aren't familiar with it, make sure to read our [guide
-to transfer learning](/guides/transfer_learning/).
+전이 학습의 요체는 모델 하위 층들을 고정시키고 상위 층들만 훈련시키는 것이다.
+익숙치 않다면 [전이 학습 안내서](/guides/transfer_learning/)를
+꼭 읽어 보자.
 
-Here are two common transfer learning blueprint involving Sequential models.
+순차 모델을 수반하는 흔한 전이 학습 방식 두 가지를 간략히 살펴보자.
 
-First, let's say that you have a Sequential model, and you want to freeze all
-layers except the last one. In this case, you would simply iterate over
-`model.layers` and set `layer.trainable = False` on each layer, except the
-last one. Like this:
+첫 번째로, 어떤 순차 모델이 있고 마지막 층을 뺀 모든 층을 고정시키고
+싶다고 해 보자. 이 경우는 `model.layers`를 순회하면서 마지막 층을 뺀
+모든 층에서 `layer.trainable = False` 설정을 해 주기만 하면 된다.
 
 ```python
 model = keras.Sequential([
@@ -497,49 +489,48 @@ model = keras.Sequential([
     layers.Dense(10),
 ])
 
-# Presumably you would want to first load pre-trained weights.
+# 먼저 사전 훈련된 가중치들을 적재해야 할 것이다.
 model.load_weights(...)
 
-# Freeze all layers except the last one.
+# 마지막 층을 뺀 모든 층들을 고정시키기
 for layer in model.layers[:-1]:
   layer.trainable = False
 
-# Recompile and train (this will only update the weights of the last layer).
+# 다시 컴파일해서 훈련 (마지막 층의 가중치만 갱신하게 된다.)
 model.compile(...)
 model.fit(...)
 ```
 
-Another common blueprint is to use a Sequential model to stack a pre-trained
-model and some freshly initialized classification layers. Like this:
+또 다른 방식은 순차 모델을 사용해서 사전 훈련 모델 위에
+새로 초기화한 어떤 분류 층을 쌓는 것이다.
 
 ```python
-# Load a convolutional base with pre-trained weights
+# 합성곱 기반 모델에 사전 훈련된 가중치 적재하기
 base_model = keras.applications.Xception(
     weights='imagenet',
     include_top=False,
     pooling='avg')
 
-# Freeze the base model
+# 기반 모델 고정시키기
 base_model.trainable = False
 
-# Use a Sequential model to add a trainable classifier on top
+# 순차 모델 사용해서 그 위에 훈련 가능한 분류 층 추가하기
 model = keras.Sequential([
     base_model,
     layers.Dense(1000),
 ])
 
-# Compile & train
+# 컴파일 및 훈련
 model.compile(...)
 model.fit(...)
 ```
 
-If you do transfer learning, you will probably find yourself frequently using
-these two patterns.
+전이 학습을 한다면 아마 이 두 패턴들을 자주 쓰게 될 것이다.
 
-That's about all you need to know about Sequential models!
+순차 모델에 대해 알아야 할 건 여기까지다!
 
-To find out more about building models in Keras, see:
+케라스에서 모델을 구축하는 방법에 대해 더 알고 싶으면 다음을 보라.
 
-- [Guide to the Functional API](/guides/functional_api/)
-- [Guide to making new Layers & Models via subclassing](
+- [함수형 API 안내서](/guides/functional_api/)
+- [서브클래스로 새 층과 모델 만들기 안내서](
     /guides/making_new_layers_and_models_via_subclassing/)

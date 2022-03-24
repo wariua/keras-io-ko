@@ -1,17 +1,17 @@
-# Transfer learning & fine-tuning
+# 전이 학습과 미세 조정
 
-**Author:** [fchollet](https://twitter.com/fchollet)<br>
-**Date created:** 2020/04/15<br>
-**Last modified:** 2020/05/12<br>
-**Description:** Complete guide to transfer learning & fine-tuning in Keras.
+**작성자:** [fchollet](https://twitter.com/fchollet)<br>
+**생성 날짜:** 2020/04/15<br>
+**최근 변경:** 2020/05/12<br>
+**설명:** 케라스의 전이 학습과 미세 조정에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/transfer_learning.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/transfer_learning.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/transfer_learning.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/transfer_learning.py)
 
 
 
 ---
-## Setup
+## 준비
 
 
 ```python
@@ -21,7 +21,7 @@ from tensorflow import keras
 ```
 
 ---
-## Introduction
+## 소개
 
 **Transfer learning** consists of taking features learned on one problem, and
 leveraging them on a new, similar problem. For instance, features from a model that has

@@ -1,17 +1,17 @@
-# Working with preprocessing layers
+# 전처리 층 이용하기
 
-**Authors:** Francois Chollet, Mark Omernick<br>
-**Date created:** 2020/07/25<br>
-**Last modified:** 2021/04/23<br>
-**Description:** Overview of how to leverage preprocessing layers to create end-to-end models.
+**작성자:** Francois Chollet, Mark Omernick<br>
+**생성 날짜:** 2020/07/25<br>
+**최근 변경:** 2021/04/23<br>
+**설명:** 전처리 층을 이용해 전범위 모델을 만드는 방법 소개.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/preprocessing_layers.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/preprocessing_layers.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/preprocessing_layers.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/preprocessing_layers.py)
 
 
 
 ---
-## Keras preprocessing
+## 케라스 전처리
 
 The Keras preprocessing layers API allows developers to build Keras-native input
 processing pipelines. These input processing pipelines can be used as independent

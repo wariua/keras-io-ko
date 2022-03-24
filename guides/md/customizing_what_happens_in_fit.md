@@ -1,17 +1,17 @@
-# Customizing what happens in `fit()`
+# `fit()` 내부 동작 바꾸기
 
-**Author:** [fchollet](https://twitter.com/fchollet)<br>
-**Date created:** 2020/04/15<br>
-**Last modified:** 2020/04/15<br>
-**Description:** Complete guide to overriding the training step of the Model class.
+**작성자:** [fchollet](https://twitter.com/fchollet)<br>
+**생성 날짜:** 2020/04/15<br>
+**최근 변경:** 2020/04/15<br>
+**설명:** Model 클래스 훈련 단계 오버라이드에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/customizing_what_happens_in_fit.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/customizing_what_happens_in_fit.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/customizing_what_happens_in_fit.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/customizing_what_happens_in_fit.py)
 
 
 
 ---
-## Introduction
+## 소개
 
 When you're doing supervised learning, you can use `fit()` and everything works
 smoothly.

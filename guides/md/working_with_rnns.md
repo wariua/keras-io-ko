@@ -1,17 +1,17 @@
-# Working with RNNs
+# RNN 이용하기
 
-**Authors:** Scott Zhu, Francois Chollet<br>
-**Date created:** 2019/07/08<br>
-**Last modified:** 2020/04/14<br>
-**Description:** Complete guide to using & customizing RNN layers.
+**작성자:** Scott Zhu, Francois Chollet<br>
+**생성 날짜:** 2019/07/08<br>
+**최근 변경:** 2020/04/14<br>
+**설명:** RNN 층 이용 및 동작 조정 방법에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/working_with_rnns.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/working_with_rnns.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/working_with_rnns.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/working_with_rnns.py)
 
 
 
 ---
-## Introduction
+## 소개
 
 Recurrent neural networks (RNN) are a class of neural networks that is powerful for
 modeling sequence data such as time series or natural language.
@@ -32,7 +32,7 @@ part of the `for` loop) with custom behavior, and use it with the generic
 prototype different research ideas in a flexible way with minimal code.
 
 ---
-## Setup
+## 준비
 
 
 ```python

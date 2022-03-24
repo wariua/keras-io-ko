@@ -1,17 +1,17 @@
-# Making new layers and models via subclassing
+# 서브클래스로 새 층과 모델 만들기
 
-**Author:** [fchollet](https://twitter.com/fchollet)<br>
-**Date created:** 2019/03/01<br>
-**Last modified:** 2020/04/13<br>
-**Description:** Complete guide to writing `Layer` and `Model` objects from scratch.
+**작성자:** [fchollet](https://twitter.com/fchollet)<br>
+**생성 날짜:** 2019/03/01<br>
+**최근 변경:** 2020/04/13<br>
+**설명:** `Layer` 및 `Model` 객체를 바닥부터 작성하는 방법에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/making_new_layers_and_models_via_subclassing.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/making_new_layers_and_models_via_subclassing.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/making_new_layers_and_models_via_subclassing.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/making_new_layers_and_models_via_subclassing.py)
 
 
 
 ---
-## Setup
+## 준비
 
 
 ```python
@@ -20,13 +20,12 @@ from tensorflow import keras
 ```
 
 ---
-## The `Layer` class: the combination of state (weights) and some computation
+## `Layer` 클래스: 상태(가중치)와 연산
 
-One of the central abstraction in Keras is the `Layer` class. A layer
-encapsulates both a state (the layer's "weights") and a transformation from
-inputs to outputs (a "call", the layer's forward pass).
+케라스의 핵심 개념 중 하나가 `Layer` 층이다. 상태(층의 "가중치")와
+입력에서 출력으로의 변환("호출", 층 진행)을 캡슐화한 것이다.
 
-Here's a densely-connected layer. It has a state: the variables `w` and `b`.
+다음은 밀집 연결 층이다. 변수 `w`와 `b`가 상태다.
 
 
 ```python
@@ -49,8 +48,8 @@ class Linear(keras.layers.Layer):
 
 ```
 
-You would use a layer by calling it on some tensor input(s), much like a Python
-function.
+파이썬 함수처럼 어떤 텐서 입력(들)을 가지고 호출하는 방식으로 층을
+사용하게 된다.
 
 
 ```python
@@ -68,16 +67,15 @@ tf.Tensor(
 
 ```
 </div>
-Note that the weights `w` and `b` are automatically tracked by the layer upon
-being set as layer attributes:
+가중치 `w`와 `b`를 층 속성으로 설정하고 나면 층에서 자동으로
+그 가중치들을 추적한다.
 
 
 ```python
 assert linear_layer.weights == [linear_layer.w, linear_layer.b]
 ```
 
-Note you also have access to a quicker shortcut for adding weight to a layer:
-the `add_weight()` method:
+층에 가중치를 추가하는 더 빠른 방법도 있다. `add_weight()` 메서드를 쓰는 것이다.
 
 
 ```python
@@ -109,13 +107,13 @@ tf.Tensor(
 ```
 </div>
 ---
-## Layers can have non-trainable weights
+## 층에 훈련 불가능 가중치 두기
 
-Besides trainable weights, you can add non-trainable weights to a layer as
-well. Such weights are meant not to be taken into account during
-backpropagation, when you are training the layer.
+훈련 가능한 가중치뿐 아니라 훈련 불가능 가중치도 층에 추가할 수 있다.
+훈련 불가능이란 건 층을 훈련시킬 때 역전파에 그 가중치를 포함시키지
+않는다는 의미다.
 
-Here's how to add and use a non-trainable weight:
+다음처럼 훈련 불가능 가중치를 추가하고 사용할 수 있다.
 
 
 ```python
@@ -145,14 +143,14 @@ print(y.numpy())
 
 ```
 </div>
-It's part of `layer.weights`, but it gets categorized as a non-trainable weight:
+`layer.weights`에 포함되지만 훈련 불가능 가중치로 분류돼 있다.
 
 
 ```python
 print("weights:", len(my_sum.weights))
 print("non-trainable weights:", len(my_sum.non_trainable_weights))
 
-# It's not included in the trainable weights:
+# 훈련 가능 가중치 목록에 포함되지 않는다
 print("trainable_weights:", my_sum.trainable_weights)
 ```
 
@@ -165,10 +163,10 @@ trainable_weights: []
 ```
 </div>
 ---
-## Best practice: deferring weight creation until the shape of the inputs is known
+## 모범 설계: 입력 형태를 알게 될 때까지 가중치 생성 연기하기
 
-Our `Linear` layer above took an `input_dim` argument that was used to compute
-the shape of the weights `w` and `b` in `__init__()`:
+앞서 만든 `Linear` 층은 `__init__()`에 `input_dim` 인자가 있어서 
+가중치 `w`와 `b` 형태를 계산하는 데 사용한다.
 
 
 ```python
@@ -186,12 +184,11 @@ class Linear(keras.layers.Layer):
 
 ```
 
-In many cases, you may not know in advance the size of your inputs, and you
-would like to lazily create weights when that value becomes known, some time
-after instantiating the layer.
+하지만 많은 경우 입력 크기를 미리 알지 못할 수 있고, 그래서 층 인스턴스
+생성 후 크기를 알게 됐을 때 가중치들을 만들고 싶을 수 있다.
 
-In the Keras API, we recommend creating layer weights in the `build(self,
-inputs_shape)` method of your layer. Like this:
+케라스 API에선 다음처럼 층의 `build(self, inputs_shape)` 메서드에서
+층 가중치들을 만들기를 권장한다.
 
 
 ```python
@@ -216,36 +213,36 @@ class Linear(keras.layers.Layer):
 
 ```
 
-The `__call__()` method of your layer will automatically run build the first time
-it is called. You now have a layer that's lazy and thus easier to use:
+층의 `__call__()` 메서드가 처음 호출될 때 자동으로 build가 실행된다.
+이제 필요할 때가 돼야 동작을 수행하는, 그래서 쓰기 쉬운 층이 되었다.
 
 
 ```python
-# At instantiation, we don't know on what inputs this is going to get called
+# 인스턴스 생성 시점엔 어떤 입력으로 층을 호출할지 알 수 없다.
 linear_layer = Linear(32)
 
-# The layer's weights are created dynamically the first time the layer is called
+# 층이 처음 호출될 때 동적으로 층의 가중치들이 생성된다.
 y = linear_layer(x)
 
 ```
 
-Implementing `build()` separately as shown above nicely separates creating weights
-only once from using weights in every call. However, for some advanced custom
-layers, it can become impractical to separate the state creation and computation.
-Layer implementers are allowed to defer weight creation to the first `__call__()`,
-but need to take care that later calls use the same weights. In addition, since
-`__call__()` is likely to be executed for the first time inside a `tf.function`,
-any variable creation that takes place in `__call__()` should be wrapped in a
-`tf.init_scope`.
+위와 같이 `build()`를 분리해서 구현하면 가중치를 한 번 만드는 동작과
+호출 여러 번에서 사용하는 동작이 깔끔하게 분리된다. 하지만 일부 특수한
+자체 제작 층에선 상태 생성과 계산을 분리하는 게 비현실적일 수 있다.
+그런 경우에는 가중치 생성 동작이 첫 번째 `__call__()`에서 이뤄지도록
+지연시킬 수도 있지만 이후 호출들에서도 같은 가중치가 쓰이도록
+신경 써 줘야 한다. 한편으로 `__call__()`이 처음 실행될 때는
+`tf.function` 내부에서일 가능성이 높기 때문에 `__call__()`에서
+이뤄지는 변수 생성을 `tf.init_scope`로 감싸 주어야 한다.
 
 ---
-## Layers are recursively composable
+## 재귀적으로 층 만들기
 
-If you assign a Layer instance as an attribute of another Layer, the outer layer
-will start tracking the weights created by the inner layer.
+어떤 Layer 인스턴스를 다른 Layer의 속성으로 할당하면
+내부 층에서 만드는 가중치들을 바깥 층에서 추적하기 시작한다.
 
-We recommend creating such sublayers in the `__init__()` method and leave it to
-the first `__call__()` to trigger building their weights.
+`__init__()`에서 그런 하위 층을 만들기를 권장하며, 가중치 생성을
+촉발시키는 건 첫 번째 `__call__()`에게 맡겨 두자.
 
 
 ```python
@@ -266,7 +263,7 @@ class MLPBlock(keras.layers.Layer):
 
 
 mlp = MLPBlock()
-y = mlp(tf.ones(shape=(3, 64)))  # The first call to the `mlp` will create the weights
+y = mlp(tf.ones(shape=(3, 64)))  # `mlp` 첫 호출 때 가중치들을 만든다
 print("weights:", len(mlp.weights))
 print("trainable weights:", len(mlp.trainable_weights))
 ```
@@ -279,15 +276,14 @@ trainable weights: 6
 ```
 </div>
 ---
-## The `add_loss()` method
+## `add_loss()` 메서드
 
-When writing the `call()` method of a layer, you can create loss tensors that
-you will want to use later, when writing your training loop. This is doable by
-calling `self.add_loss(value)`:
+층의 `call()` 메서드를 작성할 때 이후 훈련 루프 작성 시 사용할
+손실 텐서를 만들 수 있다. `self.add_loss(value)`를 호출하면 된다.
 
 
 ```python
-# A layer that creates an activity regularization loss
+# 활성 정칙화 손실 만드는 층
 class ActivityRegularizationLayer(keras.layers.Layer):
     def __init__(self, rate=1e-2):
         super(ActivityRegularizationLayer, self).__init__()
@@ -299,10 +295,10 @@ class ActivityRegularizationLayer(keras.layers.Layer):
 
 ```
 
-These losses (including those created by any inner layer) can be retrieved via
-`layer.losses`. This property is reset at the start of every `__call__()` to
-the top-level layer, so that `layer.losses` always contains the loss values
-created during the last forward pass.
+`layer.losses`를 통해 이 손실을 (내부 층에서 만든 손실 포함)
+얻을 수 있다. 최상위 층 `__call__()` 시작 때마다 그 속성이
+재설정되며, 그래서 `layer.losses`는 항상 지난번 진행 동안
+만들어진 손실 값을 담고 있다.
 
 
 ```python
@@ -317,18 +313,18 @@ class OuterLayer(keras.layers.Layer):
 
 
 layer = OuterLayer()
-assert len(layer.losses) == 0  # No losses yet since the layer has never been called
+assert len(layer.losses) == 0  # 층이 호출되지 않았으므로 아직 손실 없음
 
 _ = layer(tf.zeros(1, 1))
-assert len(layer.losses) == 1  # We created one loss value
+assert len(layer.losses) == 1  # 손실 값 하나 생성했음
 
-# `layer.losses` gets reset at the start of each __call__
+# __call__ 시작 때마다 `layer.losses` 재설정
 _ = layer(tf.zeros(1, 1))
-assert len(layer.losses) == 1  # This is the loss created during the call above
+assert len(layer.losses) == 1  # 위 호출 동안 만들어진 손실임
 ```
 
-In addition, the `layer.losses` property also contains regularization
-losses created for the weights of any inner layer:
+또한 `layer.losses` 속성은 내부 층 가중치에 대해 만들어진
+정칙화 손실도 담는다.
 
 
 ```python
@@ -347,8 +343,8 @@ class OuterLayerWithKernelRegularizer(keras.layers.Layer):
 layer = OuterLayerWithKernelRegularizer()
 _ = layer(tf.zeros((1, 1)))
 
-# This is `1e-3 * sum(layer.dense.kernel ** 2)`,
-# created by the `kernel_regularizer` above.
+# 위의 `kernel_regularizer`에 의해 만들어진 손실
+# `1e-3 * sum(layer.dense.kernel ** 2)`
 print(layer.losses)
 ```
 
@@ -358,32 +354,31 @@ print(layer.losses)
 
 ```
 </div>
-These losses are meant to be taken into account when writing training loops,
-like this:
+다음처럼 훈련 루프를 작성할 때 그 손실들을 가져다 쓰게 된다.
 
 ```python
-# Instantiate an optimizer.
+# 최적화 인스턴스 만들기
 optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
 loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
-# Iterate over the batches of a dataset.
+# 데이터셋 배치들을 가지고 돌기
 for x_batch_train, y_batch_train in train_dataset:
   with tf.GradientTape() as tape:
-    logits = layer(x_batch_train)  # Logits for this minibatch
-    # Loss value for this minibatch
+    logits = layer(x_batch_train)  # 이 미니배치에 대한 로짓
+    # 이 미니배치에 대한 손실 값
     loss_value = loss_fn(y_batch_train, logits)
-    # Add extra losses created during this forward pass:
+    # 이 진행 동안 생긴 추가 손실 더하기
     loss_value += sum(model.losses)
 
   grads = tape.gradient(loss_value, model.trainable_weights)
   optimizer.apply_gradients(zip(grads, model.trainable_weights))
 ```
 
-For a detailed guide about writing training loops, see the
-[guide to writing a training loop from scratch](/guides/writing_a_training_loop_from_scratch/).
+훈련 루프 작성에 대한 자세한 안내는
+[훈련 루프 바닥부터 작성하기 안내서](/guides/writing_a_training_loop_from_scratch/)를 보라.
 
-These losses also work seamlessly with `fit()` (they get automatically summed
-and added to the main loss, if any):
+`fit()`을 쓸 때도 그 손실들이 매끄럽게 동작한다.
+(즉, 자동으로 그 합이 주 손실에 더해진다.)
 
 
 ```python
@@ -393,14 +388,12 @@ inputs = keras.Input(shape=(3,))
 outputs = ActivityRegularizationLayer()(inputs)
 model = keras.Model(inputs, outputs)
 
-# If there is a loss passed in `compile`, the regularization
-# losses get added to it
+# `compile`에 손실을 주면 정칙화 손실이 거기 더해진다.
 model.compile(optimizer="adam", loss="mse")
 model.fit(np.random.random((2, 3)), np.random.random((2, 3)))
 
-# It's also possible not to pass any loss in `compile`,
-# since the model already has a loss to minimize, via the `add_loss`
-# call during the forward pass!
+# `compile`에 손실을 주지 않을 수도 있다. 진행 동안 `add_loss`
+# 호출을 통해서 최소화할 손실이 모델에 생겼기 때문이다.
 model.compile(optimizer="adam")
 model.fit(np.random.random((2, 3)), np.random.random((2, 3)))
 ```
@@ -415,15 +408,14 @@ model.fit(np.random.random((2, 3)), np.random.random((2, 3)))
 ```
 </div>
 ---
-## The `add_metric()` method
+## `add_metric()` 메서드
 
-Similarly to `add_loss()`, layers also have an `add_metric()` method
-for tracking the moving average of a quantity during training.
+`add_loss()`와 비슷하게 층에는 훈련 동안 측정치 이동 평균을
+추적하기 위한 `add_metric()` 메서드가 있다.
 
-Consider the following layer: a "logistic endpoint" layer.
-It takes as inputs predictions & targets, it computes a loss which it tracks
-via `add_loss()`, and it computes an accuracy scalar, which it tracks via
-`add_metric()`.
+"로지스틱 종점"이란 층을 생각해 보자. 입력으로 예측치와 목표치를
+받고, 손실을 계산해서 `add_loss()`를 통해 추적하고, 정확도 스칼라를
+계산해서 `add_metric()`을 통해 추적한다.
 
 
 ```python
@@ -435,22 +427,20 @@ class LogisticEndpoint(keras.layers.Layer):
         self.accuracy_fn = keras.metrics.BinaryAccuracy()
 
     def call(self, targets, logits, sample_weights=None):
-        # Compute the training-time loss value and add it
-        # to the layer using `self.add_loss()`.
+        # 훈련 시 손실 값 계산해서 `self.add_loss()`로 추가
         loss = self.loss_fn(targets, logits, sample_weights)
         self.add_loss(loss)
 
-        # Log accuracy as a metric and add it
-        # to the layer using `self.add_metric()`.
+        # 정확도를 지표로 얻어서 `self.add_metric()`으로 추가
         acc = self.accuracy_fn(targets, logits, sample_weights)
         self.add_metric(acc, name="accuracy")
 
-        # Return the inference-time prediction tensor (for `.predict()`).
+        # 추론 시 (`.predict()`) 예측 텐서 반환
         return tf.nn.softmax(logits)
 
 ```
 
-Metrics tracked in this way are accessible via `layer.metrics`:
+이런 식으로 추적하는 지표들을 `layer.metrics`를 통해 접근할 수 있다.
 
 
 ```python
@@ -471,7 +461,7 @@ current accuracy value: 1.0
 
 ```
 </div>
-Just like for `add_loss()`, these metrics are tracked by `fit()`:
+`add_loss()`와 마찬가지로 `fit()`에서 이 지표들도 추적한다.
 
 
 ```python
@@ -499,11 +489,10 @@ model.fit(data)
 ```
 </div>
 ---
-## You can optionally enable serialization on your layers
+## 필요시 층 직렬화 가능하게 하기
 
-If you need your custom layers to be serializable as part of a
-[Functional model](/guides/functional_api/), you can optionally implement a `get_config()`
-method:
+새로 만든 층이 [함수형 모델](/guides/functional_api/)에 포함돼 있어서
+직렬화가 가능해야 한다면 `get_config()` 메서드를 구현하면 된다.
 
 
 ```python
@@ -530,7 +519,7 @@ class Linear(keras.layers.Layer):
         return {"units": self.units}
 
 
-# Now you can recreate the layer from its config:
+# 이제 설정을 가지고 층을 다시 만들 수 있다
 layer = Linear(64)
 config = layer.get_config()
 print(config)
@@ -543,10 +532,9 @@ new_layer = Linear.from_config(config)
 
 ```
 </div>
-Note that the `__init__()` method of the base `Layer` class takes some keyword
-arguments, in particular a `name` and a `dtype`. It's good practice to pass
-these arguments to the parent class in `__init__()` and to include them in the
-layer config:
+한편 기반 클래스 `Layer`의 `__init__()` 메서드는 `name`과 `dtype` 같은
+키워드 인자를 받는다. `__init__()`에서 그런 인자들을 부모 클래스로 전달하고
+층 설정에도 포함시키는 게 좋다.
 
 
 ```python
@@ -587,29 +575,27 @@ new_layer = Linear.from_config(config)
 
 ```
 </div>
-If you need more flexibility when deserializing the layer from its config, you
-can also override the `from_config()` class method. This is the base
-implementation of `from_config()`:
+설정을 가지고 층을 역직렬화할 때 더 유연한 동작이 필요하다면
+클래스 메서드 `from_config()`를 오버라이드하면 된다.
+다음은 `from_config()` 기본 구현이다.
 
 ```python
 def from_config(cls, config):
   return cls(**config)
 ```
 
-To learn more about serialization and saving, see the complete
-[guide to saving and serializing models](/guides/serialization_and_saving/).
+직렬화와 저장에 대해 더 알고 싶다면
+[모델 저장 및 직렬화 안내서](/guides/serialization_and_saving/)를 보라.
 
 ---
-## Privileged `training` argument in the `call()` method
+## `call()` 메서드의 특수 인자 `training`
 
-Some layers, in particular the `BatchNormalization` layer and the `Dropout`
-layer, have different behaviors during training and inference. For such
-layers, it is standard practice to expose a `training` (boolean) argument in
-the `call()` method.
+`BatchNormalization` 층과 `Dropout` 층 같은 일부 층들은 훈련 때와 추론 때의
+동작이 다르다. 그런 층들에선 `call()` 메서드에 `training`이라는 (불리언)
+인자를 제공하는 게 표준 관행이다.
 
-By exposing this argument in `call()`, you enable the built-in training and
-evaluation loops (e.g. `fit()`) to correctly use the layer in training and
-inference.
+`call()`의 그 인자에 따라 내장 훈련 루프와 평가 루프(예: `fit()`)를 켜서
+층을 훈련이나 추론으로 올바르게 돌릴 수 있다.
 
 
 ```python
@@ -627,58 +613,56 @@ class CustomDropout(keras.layers.Layer):
 ```
 
 ---
-## Privileged `mask` argument in the `call()` method
+## `call()` 메서드의 특수 인자 `mask`
 
-The other privileged argument supported by `call()` is the `mask` argument.
+`call()`에서 지원하는 또 다른 특수 인자로 `mask`가 있다.
 
-You will find it in all Keras RNN layers. A mask is a boolean tensor (one
-boolean value per timestep in the input) used to skip certain input timesteps
-when processing timeseries data.
+케라스의 RNN 층들에서 이 인자를 볼 수 있다. 마스크는 (입력의 단계마다
+불리언 값이 하나씩 있는) 불리언 텐서다. 시계열 데이터 처리 시
+특정 입력 단계들을 건너뛰는 데 쓴다.
 
-Keras will automatically pass the correct `mask` argument to `__call__()` for
-layers that support it, when a mask is generated by a prior layer.
-Mask-generating layers are the `Embedding`
-layer configured with `mask_zero=True`, and the `Masking` layer.
+앞선 층에서 마스크를 생성했으면 케라스에서 자동으로 마스크 지원 층의
+`__call__()`로 올바른 `mask` 인자를 전달한다. 마스크 생성 층으로는
+`mask_zero=True`로 설정한 `Embedding` 층, 그리고 `Masking` 층이 있다.
 
-To learn more about masking and how to write masking-enabled layers, please
-check out the guide
-["understanding padding and masking"](/guides/understanding_masking_and_padding/).
+마스크 사용법과 마스킹 지원 층을 작성하는 방법에 대해 더 알고 싶다면
+["마스킹과 패딩 이해하기"](/guides/understanding_masking_and_padding/)
+안내서를 확인해 보자.
 
 ---
-## The `Model` class
+## `Model` 클래스
 
-In general, you will use the `Layer` class to define inner computation blocks,
-and will use the `Model` class to define the outer model -- the object you
-will train.
+일반적으로 `Layer` 클래스를 써서 내부 연산 블록을 정의하고
+`Model` 클래스를 써서 외부 모델을 정의하게 된다.
+그 모델이 훈련 대상이 된다.
 
-For instance, in a ResNet50 model, you would have several ResNet blocks
-subclassing `Layer`, and a single `Model` encompassing the entire ResNet50
-network.
+예를 들어 ResNet50 모델에선 `Layer` 서브클래스로 여러 ResNet 블록을 만들고
+`Model` 하나로 전체 ResNet50 망을 포괄하게 한다.
 
-The `Model` class has the same API as `Layer`, with the following differences:
+`Model` 클래스는 `Layer`와 같은 API를 제공하면서도 다음 차이점이 있다.
 
-- It exposes built-in training, evaluation, and prediction loops
-(`model.fit()`, `model.evaluate()`, `model.predict()`).
-- It exposes the list of its inner layers, via the `model.layers` property.
-- It exposes saving and serialization APIs (`save()`, `save_weights()`...)
+- 내장된 훈련 루프, 평가 루프, 예측 루프를 제공한다.
+(`model.fit()`, `model.evaluate()`, `model.predict()`)
+- `model.layers` 속성을 통해 내부 층들의 목록을 제공한다.
+- 저장 및 직렬화 API를 제공한다. (`save()`, `save_weights()`, ...)
 
-Effectively, the `Layer` class corresponds to what we refer to in the
-literature as a "layer" (as in "convolution layer" or "recurrent layer") or as
-a "block" (as in "ResNet block" or "Inception block").
+실질적으로 `Layer` 클래스는 우리가 문헌에서 ("합성곱 층"이나
+"순환 층"이라고 할 때의) "층"이나 ("ResNet 블록"이나
+"Inception 블록"이라고 할 때의) "블록"에 대응한다.
 
-Meanwhile, the `Model` class corresponds to what is referred to in the
-literature as a "model" (as in "deep learning model") or as a "network" (as in
-"deep neural network").
+반면 `Model` 클래스는 문헌에서 ("딥 러닝 모델"이라고 할 때의)
+"모델"이나 ("심층 신경망"이라고 할 때의) "망"에 대응한다.
 
-So if you're wondering, "should I use the `Layer` class or the `Model` class?",
-ask yourself: will I need to call `fit()` on it? Will I need to call `save()`
-on it? If so, go with `Model`. If not (either because your class is just a block
-in a bigger system, or because you are writing training & saving code yourself),
-use `Layer`.
+따라서 "`Layer` 클래스와 `Model` 클래스 중 어느 쪽을 써야 할까?"라는
+생각이 든다면 이렇게 자문해 보면 된다. 그 대상에 `fit()`을 호출해야 할까?
+그 대상에 `save()`를 호출해야 할까? 만약 그렇다면 `Model`로 가면 된다.
+반면 (만들려는 클래스가 더 큰 시스템의 구성 블록일 뿐이어서,
+또는 훈련 및 저장 코드를 직접 작성할 거라서) 그렇지 않다면
+`Layer`를 쓰면 된다.
 
-For instance, we could take our mini-resnet example above, and use it to build
-a `Model` that we could train with `fit()`, and that we could save with
-`save_weights()`:
+예를 들어 앞서의 미니 ResNet 예시를 가져다가
+`fit()`으로 훈련시키고 `save_weights()`로 저장할 수 있는
+`Model`을 만들어 보자.
 
 ```python
 class ResNet(tf.keras.Model):
@@ -704,23 +688,23 @@ resnet.save(filepath)
 ```
 
 ---
-## Putting it all together: an end-to-end example
+## 모두 합치기: 전범위 예시
 
-Here's what you've learned so far:
+지금까지 다음을 배웠다.
 
-- A `Layer` encapsulate a state (created in `__init__()` or `build()`) and some
-computation (defined in `call()`).
-- Layers can be recursively nested to create new, bigger computation blocks.
-- Layers can create and track losses (typically regularization losses) as well
-as metrics, via `add_loss()` and `add_metric()`
-- The outer container, the thing you want to train, is a `Model`. A `Model` is
-just like a `Layer`, but with added training and serialization utilities.
+- `Layer`는 (`__init__()`이나 `build()`에서 만드는) 상태와
+(`call()`에서 정의하는) 연산을 담는다.
+- 층을 다른 층으로 감싸서 더 큰 연산 블록을 새로 만들 수 있다.
+- 층에서 `add_loss()` 및 `add_metric()`을 통해 손실(보통 정칙화 손실)과
+지표를 만들고 추적할 수 있다.
+- 훈련 대상이 되는 바깥 구조가 `Model`이다. `Model`은 `Layer`와 비슷하되
+추가로 훈련 및 직렬화를 위한 메서드가 있다.
 
-Let's put all of these things together into an end-to-end example: we're going
-to implement a Variational AutoEncoder (VAE). We'll train it on MNIST digits.
+이 모든 걸 모아서 전범위 예시로 만들어 보자. 변분 오토인코더(Variational
+AutoEncoder, VAE)를 구현해서 MNIST 숫자로 훈련시킬 것이다.
 
-Our VAE will be a subclass of `Model`, built as a nested composition of layers
-that subclass `Layer`. It will feature a regularization loss (KL divergence).
+그 VAE는 `Model`의 서브클래스이며 `Layer`의 서브클래스인 층들을 조합해서
+만든다. 정칙화 손실(KL 발산)을 포함한다.
 
 
 ```python
@@ -728,7 +712,7 @@ from tensorflow.keras import layers
 
 
 class Sampling(layers.Layer):
-    """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
+    """(z_mean, z_log_var)를 가지고 숫자 인코딩 벡터 z를 만든다."""
 
     def call(self, inputs):
         z_mean, z_log_var = inputs
@@ -739,7 +723,7 @@ class Sampling(layers.Layer):
 
 
 class Encoder(layers.Layer):
-    """Maps MNIST digits to a triplet (z_mean, z_log_var, z)."""
+    """MNIST 숫자를 튜플 (z_mean, z_log_var, z)로 사상한다."""
 
     def __init__(self, latent_dim=32, intermediate_dim=64, name="encoder", **kwargs):
         super(Encoder, self).__init__(name=name, **kwargs)
@@ -757,7 +741,7 @@ class Encoder(layers.Layer):
 
 
 class Decoder(layers.Layer):
-    """Converts z, the encoded digit vector, back into a readable digit."""
+    """숫자 인코딩 벡터 z를 읽을 수 있는 숫자로 다시 변환한다."""
 
     def __init__(self, original_dim, intermediate_dim=64, name="decoder", **kwargs):
         super(Decoder, self).__init__(name=name, **kwargs)
@@ -770,7 +754,7 @@ class Decoder(layers.Layer):
 
 
 class VariationalAutoEncoder(keras.Model):
-    """Combines the encoder and decoder into an end-to-end model for training."""
+    """인코더와 디코더를 합쳐서 훈련 가능한 전구간 모델로 만든다."""
 
     def __init__(
         self,
@@ -788,7 +772,7 @@ class VariationalAutoEncoder(keras.Model):
     def call(self, inputs):
         z_mean, z_log_var, z = self.encoder(inputs)
         reconstructed = self.decoder(z)
-        # Add KL divergence regularization loss.
+        # KL 발산 정칙화 손실 더하기
         kl_loss = -0.5 * tf.reduce_mean(
             z_log_var - tf.square(z_mean) - tf.exp(z_log_var) + 1
         )
@@ -797,7 +781,7 @@ class VariationalAutoEncoder(keras.Model):
 
 ```
 
-Let's write a simple training loop on MNIST:
+MNIST에 도는 간단한 훈련 루프를 작성해 보자.
 
 
 ```python
@@ -817,17 +801,17 @@ train_dataset = train_dataset.shuffle(buffer_size=1024).batch(64)
 
 epochs = 2
 
-# Iterate over epochs.
+# epochs 번 돌기
 for epoch in range(epochs):
     print("Start of epoch %d" % (epoch,))
 
-    # Iterate over the batches of the dataset.
+    # 데이터셋 배치들을 가지고 돌기
     for step, x_batch_train in enumerate(train_dataset):
         with tf.GradientTape() as tape:
             reconstructed = vae(x_batch_train)
-            # Compute reconstruction loss
+            # 복원 손실 계산
             loss = mse_loss_fn(x_batch_train, reconstructed)
-            loss += sum(vae.losses)  # Add KLD regularization loss
+            loss += sum(vae.losses)  # KLD 정칙화 손실 더하기
 
         grads = tape.gradient(loss, vae.trainable_weights)
         optimizer.apply_gradients(zip(grads, vae.trainable_weights))
@@ -865,8 +849,8 @@ step 900: mean loss = 0.0713
 
 ```
 </div>
-Note that since the VAE is subclassing `Model`, it features built-in training
-loops. So you could also have trained it like this:
+VAE가 `Model`의 서브클래스이기 때문에 훈련 루프가 내장돼 있다.
+따라서 다음처럼 훈련시킬 수도 있다.
 
 
 ```python
@@ -890,15 +874,15 @@ Epoch 2/2
 ```
 </div>
 ---
-## Beyond object-oriented development: the Functional API
+## 객체 지향 개발을 넘어서: 함수형 API
 
-Was this example too much object-oriented development for you? You can also
-build models using the [Functional API](/guides/functional_api/). Importantly,
-choosing one style or another does not prevent you from leveraging components
-written in the other style: you can always mix-and-match.
+위 예가 지나치게 객체 지향 개발 느낌이라면
+[함수형 API](/guides/functional_api/)를 이용해 모델을 만들 수도 있다.
+어느 한 쪽을 택한다고 해서 다른 쪽 방식으로 작성된 요소들을 이용하지
+못하는 게 아니라는 점을 잊지 말자. 언제든 섞어 쓸 수 있다.
 
-For instance, the Functional API example below reuses the same `Sampling` layer
-we defined in the example above:
+예를 들어 아래의 함수형 API 예시에선 위 예에서 정의했던
+`Sampling` 층을 재사용한다.
 
 
 ```python
@@ -906,7 +890,7 @@ original_dim = 784
 intermediate_dim = 64
 latent_dim = 32
 
-# Define encoder model.
+# 인코더 모델 정의
 original_inputs = tf.keras.Input(shape=(original_dim,), name="encoder_input")
 x = layers.Dense(intermediate_dim, activation="relu")(original_inputs)
 z_mean = layers.Dense(latent_dim, name="z_mean")(x)
@@ -914,21 +898,21 @@ z_log_var = layers.Dense(latent_dim, name="z_log_var")(x)
 z = Sampling()((z_mean, z_log_var))
 encoder = tf.keras.Model(inputs=original_inputs, outputs=z, name="encoder")
 
-# Define decoder model.
+# 디코더 모델 정의
 latent_inputs = tf.keras.Input(shape=(latent_dim,), name="z_sampling")
 x = layers.Dense(intermediate_dim, activation="relu")(latent_inputs)
 outputs = layers.Dense(original_dim, activation="sigmoid")(x)
 decoder = tf.keras.Model(inputs=latent_inputs, outputs=outputs, name="decoder")
 
-# Define VAE model.
+# VAE 모델 정의
 outputs = decoder(z)
 vae = tf.keras.Model(inputs=original_inputs, outputs=outputs, name="vae")
 
-# Add KL divergence regularization loss.
+# KL 발산 정칙화 손실 더하기
 kl_loss = -0.5 * tf.reduce_mean(z_log_var - tf.square(z_mean) - tf.exp(z_log_var) + 1)
 vae.add_loss(kl_loss)
 
-# Train.
+# 훈련
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 vae.compile(optimizer, loss=tf.keras.losses.MeanSquaredError())
 vae.fit(x_train, x_train, epochs=3, batch_size=64)
@@ -947,4 +931,4 @@ Epoch 3/3
 
 ```
 </div>
-For more information, make sure to read the [Functional API guide](/guides/functional_api/).
+더 많은 내용을 알고 싶으면 [함수형 API 안내서](/guides/functional_api/)를 읽어 보자.

@@ -1,17 +1,17 @@
-# Training & evaluation with the built-in methods
+# 케라스 내장 메서드를 이용한 훈련과 평가
 
-**Author:** [fchollet](https://twitter.com/fchollet)<br>
-**Date created:** 2019/03/01<br>
-**Last modified:** 2020/04/13<br>
-**Description:** Complete guide to training & evaluation with `fit()` and `evaluate()`.
+**작성자:** [fchollet](https://twitter.com/fchollet)<br>
+**생성 날짜:** 2019/03/01<br>
+**최근 변경:** 2020/04/13<br>
+**설명:** `fit()`과 `evaluate()`를 이용한 훈련 및 평가에 대한 안내서.
 
 
-<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**View in Colab**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/training_with_built_in_methods.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub source**](https://github.com/keras-team/keras-io/blob/master/guides/training_with_built_in_methods.py)
+<img class="k-inline-icon" src="https://colab.research.google.com/img/colab_favicon.ico"/> [**Colab에서 보기**](https://colab.research.google.com/github/keras-team/keras-io/blob/master/guides/ipynb/training_with_built_in_methods.ipynb)  <span class="k-dot">•</span><img class="k-inline-icon" src="https://github.com/favicon.ico"/> [**GitHub 소스**](https://github.com/keras-team/keras-io/blob/master/guides/training_with_built_in_methods.py)
 
 
 
 ---
-## Setup
+## 준비
 
 
 ```python
@@ -21,38 +21,38 @@ from tensorflow.keras import layers
 ```
 
 ---
-## Introduction
+## 소개
 
-This guide covers training, evaluation, and prediction (inference) models
-when using built-in APIs for training & validation (such as `Model.fit()`,
-`Model.evaluate()` and `Model.predict()`).
+이 안내서는 훈련과 평가를 위한 (`Model.fit()`, `Model.evaluate()`,
+`Model.predict()` 같은) 내장 API를 이용한 모델 훈련과 평가, 예측(추론)을
+다룬다.
 
-If you are interested in leveraging `fit()` while specifying your
-own training step function, see the
-[Customizing what happens in `fit()` guide](/guides/customizing_what_happens_in_fit/).
+`fit()`을 활용하면서 자체적인 훈련 단계 함수를 쓰는 방식에 대해 알고 싶다면
+[`fit()` 내부 동작 바꾸기 안내서](/guides/customizing_what_happens_in_fit/)를
+보면 된다.
 
-If you are interested in writing your own training & evaluation loops from
-scratch, see the guide
-["writing a training loop from scratch"](/guides/writing_a_training_loop_from_scratch/).
+자체적인 훈련 루프와 평가 루프를 바닥부터 작성하는 방식에 대해 알고 싶다면
+["훈련 루프 바닥부터 작성하기"](/guides/writing_a_training_loop_from_scratch/)
+안내서를 보면 된다.
 
-In general, whether you are using built-in loops or writing your own, model training &
-evaluation works strictly in the same way across every kind of Keras model --
-Sequential models, models built with the Functional API, and models written from
-scratch via model subclassing.
+일반적으로 말해 내장 루프를 사용하건 자체 루프를 작성하건
+모델 훈련과 평가 동작은 모든 케라스 모델에서 (순차형 모델,
+함수형 API로 만든 모델, 서브클래스를 통해 바닥부터 작성한 모델 모두에서)
+정확히 같은 방식으로 이뤄진다.
 
-This guide doesn't cover distributed training, which is covered in our
-[guide to multi-GPU & distributed training](/guides/distributed_training/).
+이 안내서에서 분산 훈련은 다루지 않는다.
+[다중 GPU 훈련과 분산 훈련 안내서](/guides/distributed_training/)를 보면 된다.
 
 ---
-## API overview: a first end-to-end example
+## API 살펴보기: 첫 번째 전범위 예시
 
-When passing data to the built-in training loops of a model, you should either use
-**NumPy arrays** (if your data is small and fits in memory) or **`tf.data.Dataset`
-objects**. In the next few paragraphs, we'll use the MNIST dataset as NumPy arrays, in
-order to demonstrate how to use optimizers, losses, and metrics.
+모델의 내장 훈련 루프에 데이터를 줄 때는 (데이터가 작아서 메모리에 들어가는
+경우) **NumPy 배열**을 쓰거나 아니면 **`tf.data.Dataset` 객체**를 써야 한다.
+이어지는 내용에선 최적화와 손실, 지표 사용 방식을 보이기 위해
+NumPy 배열로 된 MNIST 데이터셋을 사용할 것이다.
 
-Let's consider the following model (here, we build in with the Functional API, but it
-could be a Sequential model or a subclassed model as well):
+다음 모델을 생각해 보자. (여기선 함수형 API로 모델을 만들지만
+순차형 모델이나 서브클래스 모델도 가능하다.)
 
 
 ```python
@@ -64,48 +64,47 @@ outputs = layers.Dense(10, activation="softmax", name="predictions")(x)
 model = keras.Model(inputs=inputs, outputs=outputs)
 ```
 
-Here's what the typical end-to-end workflow looks like, consisting of:
+그러면 전체 작업 흐름은 보통 다음 단계들로 이뤄진다.
 
-- Training
-- Validation on a holdout set generated from the original training data
-- Evaluation on the test data
+- 훈련시키기
+- 원래 훈련 데이터에서 따로 떼어 둔 일부를 가지고 평가하기
+- 테스트 데이터를 가지고 검사하기
 
-We'll use MNIST data for this example.
+MNIST 데이터를 사용할 것이다.
 
 
 ```python
 (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-# Preprocess the data (these are NumPy arrays)
+# (NumPy 배열로 된) 데이터 전처리하기
 x_train = x_train.reshape(60000, 784).astype("float32") / 255
 x_test = x_test.reshape(10000, 784).astype("float32") / 255
 
 y_train = y_train.astype("float32")
 y_test = y_test.astype("float32")
 
-# Reserve 10,000 samples for validation
+# 10,000개 표본을 평가용으로 떼어 두기
 x_val = x_train[-10000:]
 y_val = y_train[-10000:]
 x_train = x_train[:-10000]
 y_train = y_train[:-10000]
 ```
 
-We specify the training configuration (optimizer, loss, metrics):
+훈련 설정(최적화, 손실, 지표)을 지정하자.
 
 
 ```python
 model.compile(
-    optimizer=keras.optimizers.RMSprop(),  # Optimizer
-    # Loss function to minimize
+    optimizer=keras.optimizers.RMSprop(),  # 최적화
+    # 최소화할 손실 함수
     loss=keras.losses.SparseCategoricalCrossentropy(),
-    # List of metrics to monitor
+    # 감시할 지표 목록
     metrics=[keras.metrics.SparseCategoricalAccuracy()],
 )
 ```
 
-We call `fit()`, which will train the model by slicing the data into "batches" of size
-`batch_size`, and repeatedly iterating over the entire dataset for a given number of
-`epochs`.
+`fit()`을 호출하면 데이터를 `batch_size` 크기인 "배치"들로 나눠서 모델을 훈련시키며,
+전체 데이터셋을 `epochs` 번만큼 반복해서 돈다.
 
 
 ```python
@@ -115,9 +114,9 @@ history = model.fit(
     y_train,
     batch_size=64,
     epochs=2,
-    # We pass some validation for
-    # monitoring validation loss and metrics
-    # at the end of each epoch
+    # 에포크 끝마다 평가 손실과 지표들을
+    # 감시할 수 있도록 평가용 데이터를
+    # 좀 주자.
     validation_data=(x_val, y_val),
 )
 ```
@@ -132,8 +131,7 @@ Epoch 2/2
 
 ```
 </div>
-The returned `history` object holds a record of the loss values and metric values
-during training:
+반환되는 `history` 객체는 훈련 중 손실 값과 지표 값의 변화 기록을 담고 있다.
 
 
 ```python
@@ -152,17 +150,17 @@ history.history
 
 ```
 </div>
-We evaluate the model on the test data via `evaluate()`:
+`evaluate()`을 통해 테스트 데이터를 가지고 모델을 평가한다.
 
 
 ```python
-# Evaluate the model on the test data using `evaluate`
+# `evaluate`로 테스트 데이터에 대해 모델 평가하기
 print("Evaluate on test data")
 results = model.evaluate(x_test, y_test, batch_size=128)
 print("test loss, test acc:", results)
 
-# Generate predictions (probabilities -- the output of the last layer)
-# on new data using `predict`
+# `predict`로 새 데이터에 대해
+# 예측(확률들. 마지막 층의 출력) 만들어 내기
 print("Generate predictions for 3 samples")
 predictions = model.predict(x_test[:3])
 print("predictions shape:", predictions.shape)
@@ -179,15 +177,15 @@ predictions shape: (3, 10)
 
 ```
 </div>
-Now, let's review each piece of this workflow in detail.
+이제 이 작업 흐름의 각 부분을 자세히 살펴보자.
 
 ---
-## The `compile()` method: specifying a loss, metrics, and an optimizer
+## `compile()` 메서드: 손실, 지표, 최적화 지정하기
 
-To train a model with `fit()`, you need to specify a loss function, an optimizer, and
-optionally, some metrics to monitor.
+`fit()`으로 모델을 훈련시키려면 손실 함수와 최적화 방법을,
+그리고 필요시 감시할 지표들을 지정해 줘야 한다.
 
-You pass these to the model as arguments to the `compile()` method:
+그 값들을 `compile()` 메서드 인자로 모델에 준다.
 
 
 ```python
@@ -198,15 +196,14 @@ model.compile(
 )
 ```
 
-The `metrics` argument should be a list -- your model can have any number of metrics.
+`metrics` 인자는 리스트여야 한다. 모델에 지표가 여러 개일 수 있기 때문이다.
 
-If your model has multiple outputs, you can specify different losses and metrics for
-each output, and you can modulate the contribution of each output to the total loss of
-the model. You will find more details about this in the **Passing data to multi-input,
-multi-output models** section.
+모델에 출력이 여러 개라면 각 출력마다 손실과 지표를 따로 지정할 수 있으며
+각 출력이 모델 전체 손실에 기여하는 정도를 조정할 수 있다.
+자세한 내용은 **입력과 출력이 여럿인 모델에 데이터 주기** 절을 보라.
 
-Note that if you're satisfied with the default settings, in many cases the optimizer,
-loss, and metrics can be specified via string identifiers as a shortcut:
+참고로 기본 설정만으로 충분하다면 최적화 방식과 손실, 지표를
+간단하게 문자열 식별자로 지정할 수도 있다.
 
 
 ```python
@@ -217,8 +214,8 @@ model.compile(
 )
 ```
 
-For later reuse, let's put our model definition and compile step in functions; we will
-call them several times across different examples in this guide.
+나중에 다시 이용할 수 있도록 모델 정의와 컴파일 단계를 함수로 만들어 두자.
+이 안내서의 예시들에서 여러 번 호출하게 될 것이다.
 
 
 ```python
@@ -243,39 +240,38 @@ def get_compiled_model():
 
 ```
 
-### Many built-in optimizers, losses, and metrics are available
+### 다양한 내장 최적화, 손실, 지표
 
-In general, you won't have to create your own losses, metrics, or optimizers
-from scratch, because what you need is likely to be already part of the Keras API:
+왠만하면 손실이나 지표, 최적화 방식을 바닥부터 새로 만들 일이 없을 것이다.
+필요한 게 케라스 API에 이미 포함돼 있을 것이기 때문이다.
 
-Optimizers:
+최적화:
 
-- `SGD()` (with or without momentum)
+- `SGD()` (모멘텀 지정 가능)
 - `RMSprop()`
 - `Adam()`
-- etc.
+- 등등
 
-Losses:
+손실:
 
 - `MeanSquaredError()`
 - `KLDivergence()`
 - `CosineSimilarity()`
-- etc.
+- 등등
 
-Metrics:
+지표:
 
 - `AUC()`
 - `Precision()`
 - `Recall()`
-- etc.
+- 등등
 
-### Custom losses
+### 자체 작성 손실
 
-If you need to create a custom loss, Keras provides two ways to do so.
+새로운 손실을 만들어야 한다면 두 가지 방법이 있다.
 
-The first method involves creating a function that accepts inputs `y_true` and
-`y_pred`. The following example shows a loss function that computes the mean squared
-error between the real data and the predictions:
+첫 번째 방식에선 입력 `y_true`와 `y_pred`를 받는 함수를 만들게 된다.
+다음 예는 실제 데이터와 예측 간의 평균 제곱 오차를 계산하는 손실 함수를 보여 준다.
 
 
 ```python
@@ -287,7 +283,7 @@ def custom_mean_squared_error(y_true, y_pred):
 model = get_uncompiled_model()
 model.compile(optimizer=keras.optimizers.Adam(), loss=custom_mean_squared_error)
 
-# We need to one-hot encode the labels to use MSE
+# MSE 계산을 위해 레이블들을 원핫 인코딩
 y_train_one_hot = tf.one_hot(y_train, depth=10)
 model.fit(x_train, y_train_one_hot, batch_size=64, epochs=1)
 ```
@@ -300,20 +296,19 @@ model.fit(x_train, y_train_one_hot, batch_size=64, epochs=1)
 
 ```
 </div>
-If you need a loss function that takes in parameters beside `y_true` and `y_pred`, you
-can subclass the `tf.keras.losses.Loss` class and implement the following two methods:
+`y_true`와 `y_pred` 외의 매개변수도 받는 손실 함수가 필요하다면
+`tf.keras.losses.Loss`의 서브클래스를 만들어서 다음 두 메서드를 구현하면 된다.
 
-- `__init__(self)`: accept parameters to pass during the call of your loss function
-- `call(self, y_true, y_pred)`: use the targets (y_true) and the model predictions
-(y_pred) to compute the model's loss
+- `__init__(self)`: 손실 함수 호출에 전달할 매개변수들을 받는다.
+- `call(self, y_true, y_pref)`: 목표치(y_true)와 모델 예측치(y_pred)를
+사용해 모델의 손실을 계산한다.
 
-Let's say you want to use mean squared error, but with an added term that
-will de-incentivize  prediction values far from 0.5 (we assume that the categorical
-targets are one-hot encoded and take values between 0 and 1). This
-creates an incentive for the model not to be too confident, which may help
-reduce overfitting (we won't know if it works until we try!).
+평균 제곱 오차를 쓰되 (분류 목표치가 원핫 인코딩이어서 0에서 1 사이
+값이라 하고) 예측치가 0.5에서 너무 멀지 않게 장려하는 항을 추가하고
+싶다고 하자. 이렇게 하면 모델이 너무 확신하는 결과를 내지 않게 만들어서
+과적합을 줄이는 데 도움이 된다. (진짜 그렇게 될까 싶다면 돌려 보자!)
 
-Here's how you would do it:
+다음처럼 된다.
 
 
 ```python
@@ -344,24 +339,23 @@ model.fit(x_train, y_train_one_hot, batch_size=64, epochs=1)
 
 ```
 </div>
-### Custom metrics
+### 자체 작성 지표
 
-If you need a metric that isn't part of the API, you can easily create custom metrics
-by subclassing the `tf.keras.metrics.Metric` class. You will need to implement 4
-methods:
+API에 포함 안 된 지표가 필요하다면 `tf.keras.metrics.Metric`의 서브클래스를
+만들어서 손쉽게 자체 지표를 만들 수 있다. 4가지 메서드를 구현해야 한다.
 
-- `__init__(self)`, in which you will create state variables for your metric.
-- `update_state(self, y_true, y_pred, sample_weight=None)`, which uses the targets
-y_true and the model predictions y_pred to update the state variables.
-- `result(self)`, which uses the state variables to compute the final results.
-- `reset_state(self)`, which reinitializes the state of the metric.
+- `__init__(self)`: 지표를 위한 상태 변수들을 만든다.
+- `update_state(self, y_true, y_pred, sample_weight=None)`: 목표치 y_true와
+모델 예측치 y_pred를 사용해 상태 변수를 갱신한다.
+- `result(self)`: 상태 변수들을 가지고 최종 결과를 계산한다.
+- `reset_state(self)`: 지표의 상태를 다시 초기화한다.
 
-State update and results computation are kept separate (in `update_state()` and
-`result()`, respectively) because in some cases, the results computation might be very
-expensive and would only be done periodically.
+상태 갱신과 결과 계산이 (각기 `update_state()`와 `result()`로) 분리돼 있는
+이유는 결과 계산 비용이 아주 커서 주기적으로만 수행하고 싶은 경우도 있기
+때문이다.
 
-Here's a simple example showing how to implement a `CategoricalTruePositives` metric
-that counts how many samples were correctly classified as belonging to a given class:
+다음 예시는 몇 개 표본이 올바로 분류됐는지를 세는 `CategoricalTruePositives`
+지표 구현을 보여 준다.
 
 
 ```python
@@ -384,7 +378,7 @@ class CategoricalTruePositives(keras.metrics.Metric):
         return self.true_positives
 
     def reset_state(self):
-        # The state of the metric will be reset at the start of each epoch.
+        # 에포크가 시작될 때마다 지표 상태가 초기화된다
         self.true_positives.assign(0.0)
 
 
@@ -410,18 +404,18 @@ Epoch 3/3
 
 ```
 </div>
-### Handling losses and metrics that don't fit the standard signature
+### 표준 시그니처에 맞지 않는 손실과 지표 다루기
 
-The overwhelming majority of losses and metrics can be computed from `y_true` and
-`y_pred`, where `y_pred` is an output of your model -- but not all of them. For
-instance, a regularization loss may only require the activation of a layer (there are
-no targets in this case), and this activation may not be a model output.
+거의 대부분의 손실과 지표는 `y_true`와 모델 출력 `y_pred`를 가지고
+계산할 수 있지만 다 그렇지는 않다. 예를 들어 정칙화 손실에는
+층의 활성만 필요할 수 있는데 (이 경우 목표치가 없다), 그 활성이
+모델 출력이 아닐 수도 있다.
 
-In such cases, you can call `self.add_loss(loss_value)` from inside the call method of
-a custom layer. Losses added in this way get added to the "main" loss during training
-(the one passed to `compile()`). Here's a simple example that adds activity
-regularization (note that activity regularization is built-in in all Keras layers --
-this layer is just for the sake of providing a concrete example):
+그런 경우에는 새로운 층의 call 메서드에서 `self.add_loss(loss_value)`를
+호출하면 된다. 이런 식으로 추가한 손실이 훈련 동안 (`compile()`에 줬던)
+"주" 손실에 더해진다. 다음 예시에선 활성 정칙화를 추가한다. (참고로
+활성 정칙화는 모든 케라스 층에 내장돼 있다. 이 층은 구체적 예시를
+위한 것일 뿐이다.)
 
 
 ```python
@@ -429,13 +423,13 @@ this layer is just for the sake of providing a concrete example):
 class ActivityRegularizationLayer(layers.Layer):
     def call(self, inputs):
         self.add_loss(tf.reduce_sum(inputs) * 0.1)
-        return inputs  # Pass-through layer.
+        return inputs  # 그대로 통과
 
 
 inputs = keras.Input(shape=(784,), name="digits")
 x = layers.Dense(64, activation="relu", name="dense_1")(inputs)
 
-# Insert activity regularization as a layer
+# 활성 정칙화를 층 형태로 추가
 x = ActivityRegularizationLayer()(x)
 
 x = layers.Dense(64, activation="relu", name="dense_2")(x)
@@ -447,8 +441,7 @@ model.compile(
     loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
 )
 
-# The displayed loss will be much higher than before
-# due to the regularization component.
+# 정칙화 요소 때문에 이전보다 훨씬 높은 손실이 표시된다.
 model.fit(x_train, y_train, batch_size=64, epochs=1)
 ```
 
@@ -460,27 +453,26 @@ model.fit(x_train, y_train, batch_size=64, epochs=1)
 
 ```
 </div>
-You can do the same for logging metric values, using `add_metric()`:
+지표 값 기록에도 마찬가지로 `add_metric()`을 쓸 수 있다.
 
 
 ```python
 
 class MetricLoggingLayer(layers.Layer):
     def call(self, inputs):
-        # The `aggregation` argument defines
-        # how to aggregate the per-batch values
-        # over each epoch:
-        # in this case we simply average them.
+        # `aggregation` 인자는 각 에포크마다
+        # 배치별 값들을 어떻게 종합할지를 정한다.
+        # 여기선 그냥 평균한다.
         self.add_metric(
             keras.backend.std(inputs), name="std_of_activation", aggregation="mean"
         )
-        return inputs  # Pass-through layer.
+        return inputs  # 그대로 통과
 
 
 inputs = keras.Input(shape=(784,), name="digits")
 x = layers.Dense(64, activation="relu", name="dense_1")(inputs)
 
-# Insert std logging as a layer.
+# 표준 편차 기록을 층 형태로 삽입.
 x = MetricLoggingLayer()(x)
 
 x = layers.Dense(64, activation="relu", name="dense_2")(x)
@@ -502,11 +494,12 @@ model.fit(x_train, y_train, batch_size=64, epochs=1)
 
 ```
 </div>
-In the [Functional API](/guides/functional_api/),
-you can also call `model.add_loss(loss_tensor)`,
-or `model.add_metric(metric_tensor, name, aggregation)`.
+[함수형 API](/guides/functional_api/)에선
+`model.add_loss(loss_tensor)`나
+`model.add_metric(metric_tensor, name, aggregation)`을
+호출할 수 있다.
 
-Here's a simple example:
+간단한 예를 보자.
 
 
 ```python
@@ -535,12 +528,12 @@ model.fit(x_train, y_train, batch_size=64, epochs=1)
 
 ```
 </div>
-Note that when you pass losses via `add_loss()`, it becomes possible to call
-`compile()` without a loss function, since the model already has a loss to minimize.
+한편으로 `add_loss()`를 통해 손실을 주면 손실 함수 없이 `compile()`을
+호출하는 게 가능해진다. 최소화할 손실이 모델에 있기 때문이다.
 
-Consider the following `LogisticEndpoint` layer: it takes as inputs
-targets & logits, and it tracks a crossentropy loss via `add_loss()`. It also
-tracks classification accuracy via `add_metric()`.
+다음 `LogisticEndpoint` 층을 살펴보자. 입력으로 목표치와 로짓을 받아서
+`add_loss()`를 통해 교차 엔트로피 손실을 추적한다. 또한 `add_metric()`을
+통해 분류 정확도를 추적한다.
 
 
 ```python
@@ -552,23 +545,23 @@ class LogisticEndpoint(keras.layers.Layer):
         self.accuracy_fn = keras.metrics.BinaryAccuracy()
 
     def call(self, targets, logits, sample_weights=None):
-        # Compute the training-time loss value and add it
-        # to the layer using `self.add_loss()`.
+        # 훈련 시점 손실 값을 계산해서 `self.add_loss()`로
+        # 층에 더한다.
         loss = self.loss_fn(targets, logits, sample_weights)
         self.add_loss(loss)
 
-        # Log accuracy as a metric and add it
-        # to the layer using `self.add_metric()`.
+        # 정확도를 지표로 삼아서 `self.add_metric()`으로
+        # 층에 더한다.
         acc = self.accuracy_fn(targets, logits, sample_weights)
         self.add_metric(acc, name="accuracy")
 
-        # Return the inference-time prediction tensor (for `.predict()`).
+        # (`.predict()`를 위해) 추론 시점 예측 텐서 반환.
         return tf.nn.softmax(logits)
 
 ```
 
-You can use it in a model with two inputs (input data & targets), compiled without a
-`loss` argument, like this:
+이를 다음처럼 입력이 둘(입력 데이터와 목표치)이고 `loss` 인자 없이
+컴파일하는 모델에 쓸 수 있다.
 
 
 ```python
@@ -580,7 +573,7 @@ logits = keras.layers.Dense(10)(inputs)
 predictions = LogisticEndpoint(name="predictions")(logits, targets)
 
 model = keras.Model(inputs=[inputs, targets], outputs=predictions)
-model.compile(optimizer="adam")  # No loss argument!
+model.compile(optimizer="adam")  # 손실 인자 없음!
 
 data = {
     "inputs": np.random.random((3, 3)),
@@ -597,26 +590,25 @@ model.fit(data)
 
 ```
 </div>
-For more information about training multi-input models, see the section **Passing data
-to multi-input, multi-output models**.
+입력이 여럿인 모델을 훈련시키는 방법에 대한 자세한 내용은
+**입력과 출력이 여럿인 모델에 데이터 주기** 절을 보라.
 
-### Automatically setting apart a validation holdout set
+### 검사용 세트를 자동으로 떼어 두기
 
-In the first end-to-end example you saw, we used the `validation_data` argument to pass
-a tuple of NumPy arrays `(x_val, y_val)` to the model for evaluating a validation loss
-and validation metrics at the end of each epoch.
+앞서 본 첫 번째 전범위 예시에선 `validation_data` 인자를 통해
+NumPy 배열들의 튜플 `(x_val, y_val)`을 모델로 주었는데,
+그걸 가지고 에포크 끝마다 검사 손실과 검사 지표들을 평가한다.
 
-Here's another option: the argument `validation_split` allows you to automatically
-reserve part of your training data for validation. The argument value represents the
-fraction of the data to be reserved for validation, so it should be set to a number
-higher than 0 and lower than 1. For instance, `validation_split=0.2` means "use 20% of
-the data for validation", and `validation_split=0.6` means "use 60% of the data for
-validation".
+또 다른 방식이 있다. `validation_split` 인자를 쓰면 평가용 데이터 일부를
+자동으로 검사용으로 떼어 둔다. 인자 값이 검사용으로 떼어 둘 데이터의
+비율을 나타내므로 0보다 크고 1보다 작은 수로 설정하면 된다. 예를 들어
+`validation_split=0.2`는 "데이터 중 20%를 검사에 사용하라"는 뜻이고
+`validation_split=0.6`은 "데이터 중 60%를 검사에 사용하라"는 뜻이다.
 
-The way the validation is computed is by taking the last x% samples of the arrays
-received by the `fit()` call, before any shuffling.
+`fit()` 호출에서 받은 배열들에서 어떤 뒤섞기도 하지 않은 상태로
+뒤쪽 x% 표본들을 뽑아내는 방식으로 검사용 몫을 정한다.
 
-Note that you can only use `validation_split` when training with NumPy data.
+NumPy 데이터로 훈련시킬 때만 `validation_split`을 쓸 수 있다.
 
 
 ```python
@@ -633,43 +625,42 @@ model.fit(x_train, y_train, batch_size=64, validation_split=0.2, epochs=1)
 ```
 </div>
 ---
-## Training & evaluation from tf.data Datasets
+## tf.data Dataset으로 훈련시키고 평가하기
 
-In the past few paragraphs, you've seen how to handle losses, metrics, and optimizers,
-and you've seen how to use the `validation_data` and `validation_split` arguments in
-`fit()`, when your data is passed as NumPy arrays.
+앞선 내용에서 손실과 지표, 최적화를 다루는 방법을 보았고 `fit()`에
+NumPy 배열 데이터를 줄 때 `validation_data` 및 `validation_split` 인자를
+쓰는 방법을 보았다.
 
-Let's now take a look at the case where your data comes in the form of a
-`tf.data.Dataset` object.
+이번엔 데이터가 `tf.data.Dataset` 객체 형태로 오는 경우를 살펴보자.
 
-The `tf.data` API is a set of utilities in TensorFlow 2.0 for loading and preprocessing
-data in a way that's fast and scalable.
+텐서플로 2.0에 있는 `tf.data` API는 데이터를 빠르고 확장성 있게 적재하고
+전처리하기 위한 유틸리티 모음이다.
 
-For a complete guide about creating `Datasets`, see the
-[tf.data documentation](https://www.tensorflow.org/guide/data).
+`Dataset`을 만드는 방법에 대한 자세한 설명은
+[tf.data 문서](https://www.tensorflow.org/guide/data)를 보라.
 
-You can pass a `Dataset` instance directly to the methods `fit()`, `evaluate()`, and
-`predict()`:
+`fit()`, `evaluate()`, `predict()` 메서드에 `Dataset` 인스턴스를 바로
+줄 수 있다.
 
 
 ```python
 model = get_compiled_model()
 
-# First, let's create a training Dataset instance.
-# For the sake of our example, we'll use the same MNIST data as before.
+# 먼저 훈련용 Dataset 인스턴스를 만들자.
+# 예시일 뿐이므로 앞서의 MNIST 데이터를 그대로 쓰자.
 train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-# Shuffle and slice the dataset.
+# 데이터셋을 섞고 나눈다.
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(64)
 
-# Now we get a test dataset.
+# 이번엔 테스트용 데이터셋이다.
 test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
 test_dataset = test_dataset.batch(64)
 
-# Since the dataset already takes care of batching,
-# we don't pass a `batch_size` argument.
+# 데이터셋 자체에서 배치 처리를 해 주기 때문에
+# `batch_size` 인자를 주지 않는다.
 model.fit(train_dataset, epochs=3)
 
-# You can also evaluate or predict on a dataset.
+# 데이터셋에 대해 평가나 예측도 할 수 있다.
 print("Evaluate")
 result = model.evaluate(test_dataset)
 dict(zip(model.metrics_names, result))
@@ -691,26 +682,25 @@ Evaluate
 
 ```
 </div>
-Note that the Dataset is reset at the end of each epoch, so it can be reused of the
-next epoch.
+참고로 각 에포크가 끝날 때마다 Dataset이 재설정되기 때문에
+다음 에포크에서 재사용할 수 있다.
 
-If you want to run training only on a specific number of batches from this Dataset, you
-can pass the `steps_per_epoch` argument, which specifies how many training steps the
-model should run using this Dataset before moving on to the next epoch.
+Dataset의 몇 개 배치로만 훈련을 돌리고 싶다면 `steps_per_epoch` 인자를
+줄 수 있다. 모델에서 그 Dataset으로 훈련 단계를 몇 번 돌고 나서 다음
+에포크로 넘어가야 하는지를 지정한다.
 
-If you do this, the dataset is not reset at the end of each epoch, instead we just keep
-drawing the next batches. The dataset will eventually run out of data (unless it is an
-infinitely-looping dataset).
+이렇게 하면 각 에포크 끝에서 데이터셋이 재설정되지 않고 계속해서 다음 배치를
+뽑아낸다. 그래서 (무한히 도는 데이터셋이 아닌 한) 결국 데이터가 다 떨어지게 된다.
 
 
 ```python
 model = get_compiled_model()
 
-# Prepare the training dataset
+# 훈련용 데이터셋 준비
 train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(64)
 
-# Only use the 100 batches per epoch (that's 64 * 100 samples)
+# 에포크마다 100개 배치만 (즉 64 * 100개 표본만) 사용
 model.fit(train_dataset, epochs=3, steps_per_epoch=100)
 ```
 
@@ -727,19 +717,19 @@ Epoch 3/3
 
 ```
 </div>
-### Using a validation dataset
+### 검사용 데이터셋으로 쓰기
 
-You can pass a `Dataset` instance as the `validation_data` argument in `fit()`:
+`fit()`의 `validation_data` 인자로 `Dataset` 인스턴스를 줄 수 있다.
 
 
 ```python
 model = get_compiled_model()
 
-# Prepare the training dataset
+# 훈련용 데이터셋 준비
 train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(64)
 
-# Prepare the validation dataset
+# 평가용 데이터셋 준비
 val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
 val_dataset = val_dataset.batch(64)
 
@@ -754,31 +744,30 @@ model.fit(train_dataset, epochs=1, validation_data=val_dataset)
 
 ```
 </div>
-At the end of each epoch, the model will iterate over the validation dataset and
-compute the validation loss and validation metrics.
+각 에포크가 끝날 때마다 모델에서 평가용 데이터셋을 돌려서 평가 손실과
+평가 지표를 계산한다.
 
-If you want to run validation only on a specific number of batches from this dataset,
-you can pass the `validation_steps` argument, which specifies how many validation
-steps the model should run with the validation dataset before interrupting validation
-and moving on to the next epoch:
+그 데이터셋의 몇 개 배치로만 평가를 돌리고 싶다면 `validation_steps`
+인자를 줄 수 있다. 모델에서 평가용 데이터셋으로 평가 단계를 몇 번
+돌고 나서 평가를 멈추고 다음 에포크로 넘어가야 하는지를 지정한다.
 
 
 ```python
 model = get_compiled_model()
 
-# Prepare the training dataset
+# 훈련용 데이터셋 준비
 train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(64)
 
-# Prepare the validation dataset
+# 평가용 데이터셋 준비
 val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
 val_dataset = val_dataset.batch(64)
 
 model.fit(
     train_dataset,
     epochs=1,
-    # Only run validation using the first 10 batches of the dataset
-    # using the `validation_steps` argument
+    # `validation_steps` 인자를 써서 데이터셋의 처음 10개 배치만 가지고
+    # 평가를 돌린다.
     validation_data=val_dataset,
     validation_steps=10,
 )
@@ -792,59 +781,58 @@ model.fit(
 
 ```
 </div>
-Note that the validation dataset will be reset after each use (so that you will always
-be evaluating on the same samples from epoch to epoch).
+참고로 사용 후에는 항상 평가용 데이터셋이 재설정된다.
+(따라서 모든 에포크에서 항상 같은 표본들로 평가를 하게 된다.)
 
-The argument `validation_split` (generating a holdout set from the training data) is
-not supported when training from `Dataset` objects, since this feature requires the
-ability to index the samples of the datasets, which is not possible in general with
-the `Dataset` API.
-
----
-## Other input formats supported
-
-Besides NumPy arrays, eager tensors, and TensorFlow `Datasets`, it's possible to train
-a Keras model using Pandas dataframes, or from Python generators that yield batches of
-data & labels.
-
-In particular, the `keras.utils.Sequence` class offers a simple interface to build
-Python data generators that are multiprocessing-aware and can be shuffled.
-
-In general, we recommend that you use:
-
-- NumPy input data if your data is small and fits in memory
-- `Dataset` objects if you have large datasets and you need to do distributed training
-- `Sequence` objects if you have large datasets and you need to do a lot of custom
-Python-side processing that cannot be done in TensorFlow (e.g. if you rely on external libraries
-for data loading or preprocessing).
-
+`Dataset` 객체를 가지고 훈련할 때는 `validation_split` 인자(훈련용 데이터
+일부 떼어 두기)를 지원하지 않는다. 그 동작을 위해선 데이터셋 표본에 인덱스로
+접근할 수 있어야 하는데 `Dataset` API로는 일반적으로 불가능하기 때문이다.
 
 ---
-## Using a `keras.utils.Sequence` object as input
+## 지원하는 다른 입력 형식들
 
-`keras.utils.Sequence` is a utility that you can subclass to obtain a Python generator with
-two important properties:
+NumPy 배열과 Eager 텐서, 텐서플로 `Dataset`뿐 아니라 Pandas 데이터프레임,
+심지어 데이터와 레이블 배치를 내놓는 파이썬 제너레이터를 가지고도
+케라스 모델을 훈련시킬 수 있다.
 
-- It works well with multiprocessing.
-- It can be shuffled (e.g. when passing `shuffle=True` in `fit()`).
+그 중에서도 `keras.utils.Sequence` 클래스는 병렬 처리에 안전하고 표본 뒤섞기가
+가능한 파이썬 데이터 제너레이터를 만들 수 있는 간단한 인터페이스를 제공해 준다.
 
-A `Sequence` must implement two methods:
+일반적으로 다음을 권장한다.
+
+- 데이터가 작아서 메모리에 들어간다면 NumPy 입력 데이터 사용.
+- 데이터셋이 크고 분산 훈련을 해야 한다면 `Dataset` 객체 사용.
+- 데이터셋이 크고 텐서플로에서는 불가능한 여러 처리를 따로 파이썬으로
+해 줘야 한다면 (가령 데이터 적재나 전처리에 외부 라이브러리를 써야 한다면)
+`Sequence` 객체 사용.
+
+
+---
+## `keras.utils.Sequence` 객체를 입력으로 쓰기
+
+`keras.utils.Sequence`의 서브클래스를 만들어서 두 가지 중요한 특성을 가진
+파이썬 제너레이터를 얻을 수 있다.
+
+- 병렬 처리 때도 잘 동작한다.
+- 표본들을 뒤섞을 수 있다. (예: `fit()`에 `shuffle=True`를 줬을 때)
+
+`Sequence` 서브클래스에서 다음 두 메서드를 구현해야 한다.
 
 - `__getitem__`
 - `__len__`
 
-The method `__getitem__` should return a complete batch.
-If you want to modify your dataset between epochs, you may implement `on_epoch_end`.
+`__getitem__` 메서드는 배치 하나를 반환해야 한다.
+에포크마다 데이터셋을 바꾸고 싶다면 `on_epoch_end`도 구현할 수 있다.
 
-Here's a quick example:
+간단한 예를 보자.
 
 ```python
 from skimage.io import imread
 from skimage.transform import resize
 import numpy as np
 
-# Here, `filenames` is list of path to the images
-# and `labels` are the associated labels.
+# 여기서 `filenames`는 이미지 경로 리스트이고
+# `labels`는 연계된 레이블들이다.
 
 class CIFAR10Sequence(Sequence):
     def __init__(self, filenames, labels, batch_size):
@@ -866,30 +854,28 @@ model.fit(sequence, epochs=10)
 ```
 
 ---
-## Using sample weighting and class weighting
+## 표본 가중치와 분류 가중치 사용하기
 
-With the default settings the weight of a sample is decided by its frequency
-in the dataset. There are two methods to weight the data, independent of
-sample frequency:
+기본 설정에선 데이터셋 내 빈도에 따라 표본의 가중치가 정해진다.
+표본 빈도와 무관하게 데이터에 가중치를 줄 수 있는 방법이 두 가지 있다.
 
-* Class weights
-* Sample weights
+* 분류 가중치
+* 표본 가중치
 
-### Class weights
+### 분류 가중치
 
-This is set by passing a dictionary to the `class_weight` argument to
-`Model.fit()`. This dictionary maps class indices to the weight that should
-be used for samples belonging to this class.
+`Model.fit()`의 `class_weight` 인자에 딕셔너리를 줘서 이 가중치를
+설정할 수 있다. 그 딕셔너리가 분류 인덱스를 가중치로 매핑하고,
+그러면 그 분류에 속한 표본들에 그 가중치가 쓰이게 된다.
 
-This can be used to balance classes without resampling, or to train a
-model that gives more importance to a particular class.
+이를 이용해 리샘플링 없이 분류 균형을 맞출 수도 있고
+특정 분류를 더 중요하게 다루도록 모델을 훈련시킬 수도 있다.
 
-For instance, if class "0" is half as represented as class "1" in your data,
-you could use `Model.fit(..., class_weight={0: 1., 1: 0.5})`.
+예를 들어 데이터에서 분류 "0"이 분류 "1"의 절반 정도만 등장한다면
+`Model.fit(..., class_weight={0: 1., 1: 0.5})`라고 할 수 있다.
 
-Here's a NumPy example where we use class weights or sample weights to
-give more importance to the correct classification of class #5 (which
-is the digit "5" in the MNIST dataset).
+다음 NumPy 예시에선 분류 가중치를 이용해 5번째 분류(MNIST 데이터셋에서
+숫자 "5")를 정확히 분류하도록 중요도를 높인다.
 
 
 ```python
@@ -901,8 +887,8 @@ class_weight = {
     2: 1.0,
     3: 1.0,
     4: 1.0,
-    # Set weight "2" for class "5",
-    # making this class 2x more important
+    # "5" 분류 가중치를 "2"로 설정해서
+    # 그 분류를 두 배 중요하게 다루기
     5: 2.0,
     6: 1.0,
     7: 1.0,
@@ -924,24 +910,22 @@ Fit with class weight
 
 ```
 </div>
-### Sample weights
+### 표본 가중치
 
-For fine grained control, or if you are not building a classifier,
-you can use "sample weights".
+정밀한 제어가 필요하다면, 또는 분류 모델을 만드는 게 아니라면
+"표본 가중치"를 쓸 수 있다.
 
-- When training from NumPy data: Pass the `sample_weight`
-  argument to `Model.fit()`.
-- When training from `tf.data` or any other sort of iterator:
-  Yield `(input_batch, label_batch, sample_weight_batch)` tuples.
+- NumPy 데이터로 훈련 시: `Model.fit()`에 `sample_weight`
+  인자를 주면 된다.
+- `tf.data`나 기타 이터레이터로 훈련 시: 튜플
+  `(input_batch, label_batch, sample_weight_batch)`를 내놓으면 된다.
 
-A "sample weights" array is an array of numbers that specify how much weight
-each sample in a batch should have in computing the total loss. It is commonly
-used in imbalanced classification problems (the idea being to give more weight
-to rarely-seen classes).
+"표본 가중치" 배열은 총 손실 계산 시 배치의 각 표본에 가중치를
+얼마나 줘야 하는지 나타내는 수 배열이다. 불균형한 분류 문제들에
+흔히 쓰인다. (드문 분류에 가중치를 더 준다는 발상이다.)
 
-When the weights used are ones and zeros, the array can be used as a *mask* for
-the loss function (entirely discarding the contribution of certain samples to
-the total loss).
+가중치를 1 아니면 0으로 해서 손실 함수의 *마스크*로 쓸 수도 있다.
+(특정 표본이 총 손실에 기여하는 부분을 완전히 버리는 것이다.)
 
 
 ```python
@@ -962,18 +946,18 @@ Fit with sample weight
 
 ```
 </div>
-Here's a matching `Dataset` example:
+다음은 대응하는 `Dataset` 예시다.
 
 
 ```python
 sample_weight = np.ones(shape=(len(y_train),))
 sample_weight[y_train == 5] = 2.0
 
-# Create a Dataset that includes sample weights
-# (3rd element in the return tuple).
+# 표본 가중치를 포함한 Dataset 만들기
+# (반환 튜플의 세 번째 항목)
 train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train, sample_weight))
 
-# Shuffle and slice the dataset.
+# 데이터셋 뒤섞고 자르기
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(64)
 
 model = get_compiled_model()
@@ -989,17 +973,17 @@ model.fit(train_dataset, epochs=1)
 ```
 </div>
 ---
-## Passing data to multi-input, multi-output models
+## 입력과 출력이 여럿인 모델에 데이터 주기
 
-In the previous examples, we were considering a model with a single input (a tensor of
-shape `(764,)`) and a single output (a prediction tensor of shape `(10,)`). But what
-about models that have multiple inputs or outputs?
+앞선 예시들에서 우리는 단일 입력(`(764,)` 형태 텐서)에 단일
+출력(`(764,)` 형태 예측 텐서)인 모델을 살펴보았다. 하지만
+입력이나 출력이 여럿인 모델은 어떻게 해야 할까?
 
-Consider the following model, which has an image input of shape `(32, 32, 3)` (that's
-`(height, width, channels)`) and a time series input of shape `(None, 10)` (that's
-`(timesteps, features)`). Our model will have two outputs computed from the
-combination of these inputs: a "score" (of shape `(1,)`) and a probability
-distribution over five classes (of shape `(5,)`).
+`(32, 32, 3)` 형태(`(height, width, channels)`)인 이미지 입력과
+`(None, 10)` 형태(`(timesteps, features)`)인 시계열 입력이 있는
+모델을 생각해 보자. 모델에서 그 두 입력의 조합을 가지고 계산해서
+두 가지 출력을 내놓게 되는데, (`(1,)` 형태인) "점수"와
+(`(5,)` 형태인) 5항 분류에 대한 확률 분포다.
 
 
 ```python
@@ -1022,8 +1006,8 @@ model = keras.Model(
 )
 ```
 
-Let's plot this model, so you can clearly see what we're doing here (note that the
-shapes shown in the plot are batch shapes, rather than per-sample shapes).
+어떤 모델인지 쉽게 알 수 있도록 그림으로 그려 보자.
+(그림에 적힌 형태는 표본별 형태가 아니라 배치 형태다.)
 
 
 ```python
@@ -1039,8 +1023,7 @@ keras.utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=Tr
 
 
 
-At compilation time, we can specify different losses to different outputs, by passing
-the loss functions as a list:
+출력별로 다른 손실을 지정할 수 있다. 컴파일 때 손실 함수들을 리스트로 주면 된다.
 
 
 ```python
@@ -1050,10 +1033,10 @@ model.compile(
 )
 ```
 
-If we only passed a single loss function to the model, the same loss function would be
-applied to every output (which is not appropriate here).
+모델에 손실 함수 하나면 주면 모든 출력에 같은 손실 함수가 적용된다.
+(이번 경우에는 적합하지 않은 방식이다.)
 
-Likewise for metrics:
+지표도 마찬가지다.
 
 
 ```python
@@ -1070,8 +1053,7 @@ model.compile(
 )
 ```
 
-Since we gave names to our output layers, we could also specify per-output losses and
-metrics via a dict:
+출력 층들에 이름을 줬으므로 출력별 손실과 지표를 딕셔너리로 지정할 수도 있다.
 
 
 ```python
@@ -1091,11 +1073,11 @@ model.compile(
 )
 ```
 
-We recommend the use of explicit names and dicts if you have more than 2 outputs.
+출력이 두 개를 넘어가면 이름을 지정해서 딕셔너리를 쓰기를 권한다.
 
-It's possible to give different weights to different output-specific losses (for
-instance, one might wish to privilege the "score" loss in our example, by giving to 2x
-the importance of the class loss), using the `loss_weights` argument:
+`loss_weights` 인자를 써서 출력별 손실마다 다른 가중치를 주는 것도
+가능하다. (예를 들어 예시 모델의 "점수" 손실에 특혜를 주기 위해
+분류 손실 2배만큼의 중요도를 줄 수 있을 것이다.)
 
 
 ```python
@@ -1116,28 +1098,28 @@ model.compile(
 )
 ```
 
-You could also choose not to compute a loss for certain outputs, if these outputs are
-meant for prediction but not for training:
+어떤 출력을 예측에만 쓰고 훈련에는 쓰지 않을 거라면 그에 대한 손실을
+계산하지 않을 수도 있다.
 
 
 ```python
-# List loss version
+# 손실 리스트 버전
 model.compile(
     optimizer=keras.optimizers.RMSprop(1e-3),
     loss=[None, keras.losses.CategoricalCrossentropy()],
 )
 
-# Or dict loss version
+# 손실 딕셔너리 버전
 model.compile(
     optimizer=keras.optimizers.RMSprop(1e-3),
     loss={"class_output": keras.losses.CategoricalCrossentropy()},
 )
 ```
 
-Passing data to a multi-input or multi-output model in `fit()` works in a similar way as
-specifying a loss function in compile: you can pass **lists of NumPy arrays** (with
-1:1 mapping to the outputs that received a loss function) or **dicts mapping output
-names to NumPy arrays**.
+입력이 여럿이거나 출력이 여럿인 모델 `fit()`에 데이터를 주는 건
+컴파일 때 손실 함수를 지정하는 것과 비슷하다. 즉, (손실 함수를 받은
+출력과 1:1 매핑되는) **NumPy 배열들의 리스트**나 **출력 이름을
+NumPy 배열로 매핑하는 딕셔너리들**을 줄 수 있다.
 
 
 ```python
@@ -1146,16 +1128,16 @@ model.compile(
     loss=[keras.losses.MeanSquaredError(), keras.losses.CategoricalCrossentropy()],
 )
 
-# Generate dummy NumPy data
+# 더미 NumPy 데이터 생성하기
 img_data = np.random.random_sample(size=(100, 32, 32, 3))
 ts_data = np.random.random_sample(size=(100, 20, 10))
 score_targets = np.random.random_sample(size=(100, 1))
 class_targets = np.random.random_sample(size=(100, 5))
 
-# Fit on lists
+# 리스트로 fit
 model.fit([img_data, ts_data], [score_targets, class_targets], batch_size=32, epochs=1)
 
-# Alternatively, fit on dicts
+# 또는 딕셔너리로 fit
 model.fit(
     {"img_input": img_data, "ts_input": ts_data},
     {"score_output": score_targets, "class_output": class_targets},
@@ -1173,8 +1155,8 @@ model.fit(
 
 ```
 </div>
-Here's the `Dataset` use case: similarly as what we did for NumPy arrays, the `Dataset`
-should return a tuple of dicts.
+다음은 `Dataset`을 쓰는 경우다. NumPy 배열 방식과 비슷하게 `Dataset`이
+딕셔너리들의 튜플을 반환하게 해야 한다.
 
 
 ```python
@@ -1198,23 +1180,19 @@ model.fit(train_dataset, epochs=1)
 ```
 </div>
 ---
-## Using callbacks
+## 콜백 이용하기
 
-Callbacks in Keras are objects that are called at different points during training (at
-the start of an epoch, at the end of a batch, at the end of an epoch, etc.). They
-can be used to implement certain behaviors, such as:
+케라스의 콜백이란 훈련 중 여러 시점(에포크 시작, 배치 끝, 에포크 끝 등)에
+호출되는 객체다. 콜백을 이용해 다음과 같은 동작들을 구현할 수 있다.
 
-- Doing validation at different points during training (beyond the built-in per-epoch
-validation)
-- Checkpointing the model at regular intervals or when it exceeds a certain accuracy
-threshold
-- Changing the learning rate of the model when training seems to be plateauing
-- Doing fine-tuning of the top layers when training seems to be plateauing
-- Sending email or instant message notifications when training ends or where a certain
-performance threshold is exceeded
-- Etc.
+- (기본 에포크별 평가에 더해서) 훈련 과정 여러 지점에서 모델 평가하기
+- 정기적으로, 또는 정해진 정확도 기준을 넘을 때 모델 상태 저장하기
+- 훈련이 정체기에 접어든 것 같을 때 모델 학습률 바꾸기
+- 훈련이 정체기에 접어든 것 같을 때 상단 층 미세 조정하기
+- 훈련이 끝나거나 어떤 성능 기준치를 넘었을 때 이메일이나 메신저 알림 보내기
+- 등등
 
-Callbacks can be passed as a list to your call to `fit()`:
+`fit()` 호출 시 콜백 리스트를 줄 수 있다.
 
 
 ```python
@@ -1222,11 +1200,11 @@ model = get_compiled_model()
 
 callbacks = [
     keras.callbacks.EarlyStopping(
-        # Stop training when `val_loss` is no longer improving
+        # `val_loss`가 더 개선되지 않으면 훈련 중단
         monitor="val_loss",
-        # "no longer improving" being defined as "no better than 1e-2 less"
+        # "더 개선되지 않음"을 "1e-2 이상 줄어들지 않음"으로 정의
         min_delta=1e-2,
-        # "no longer improving" being further defined as "for at least 2 epochs"
+        # "더 개선되지 않음"을 또한 "최소 2 에포크 동안"으로 정의
         patience=2,
         verbose=1,
     )
@@ -1261,31 +1239,28 @@ Epoch 6: early stopping
 
 ```
 </div>
-### Many built-in callbacks are available
+### 이용 가능한 다양한 내장 콜백들
 
-There are many built-in callbacks already available in Keras, such as:
+케라스에는 다음과 같은 다양한 콜백들이 기본으로 포함돼 있다.
 
-- `ModelCheckpoint`: Periodically save the model.
-- `EarlyStopping`: Stop training when training is no longer improving the validation
-metrics.
-- `TensorBoard`: periodically write model logs that can be visualized in
-[TensorBoard](https://www.tensorflow.org/tensorboard) (more details in the section
-"Visualization").
-- `CSVLogger`: streams loss and metrics data to a CSV file.
-- etc.
+- `ModelCheckpoint`: 주기적으로 모델 저장하기
+- `EarlyStopping`: 평가 지표가 더는 개선되지 않을 때 훈련 중단하기
+- `TensorBoard`: 주기적으로 모델 로그 기록해서
+[텐서보드](https://www.tensorflow.org/tensorboard)로 시각화할 수 있게 하기
+(자세한 내용은 "시각화" 절 참고)
+- `CSVLogger`: 손실 및 지표 데이터를 CSV 파일로 찍기
+- 등등
 
-See the [callbacks documentation](/api/callbacks/) for the complete list.
+전체 목록은 [콜백 문서](/api/callbacks/)를 보라.
 
-### Writing your own callback
+### 자체 콜백 작성하기
 
-You can create a custom callback by extending the base class
-`keras.callbacks.Callback`. A callback has access to its associated model through the
-class property `self.model`.
+기반 클래스 `keras.callbacks.Callback`을 확장해서 자체 콜백을 만들 수 있다.
+콜백에서 클래스 속성 `self.model`을 통해 연계 모델에 접근할 수 있다.
 
-Make sure to read the
-[complete guide to writing custom callbacks](/guides/writing_your_own_callbacks/).
+[자체 콜백 작성하기 안내서](/guides/writing_your_own_callbacks/)를 꼭 읽어 보자.
 
-Here's a simple example saving a list of per-batch loss values during training:
+다음은 훈련 동안 배치별 손실 값 리스트를 저장하는 간단한 예시다.
 
 
 ```python
@@ -1300,12 +1275,12 @@ class LossHistory(keras.callbacks.Callback):
 ```
 
 ---
-## Checkpointing models
+## 모델 체크포인트 저장하기
 
-When you're training model on relatively large datasets, it's crucial to save
-checkpoints of your model at frequent intervals.
+상당히 큰 데이터셋으로 모델을 훈련시킬 때는 반드시 모델을 자주
+저장해야 한다.
 
-The easiest way to achieve this is with the `ModelCheckpoint` callback:
+가장 쉬운 방법이 `ModelCheckpoint` 콜백이다.
 
 
 ```python
@@ -1313,13 +1288,12 @@ model = get_compiled_model()
 
 callbacks = [
     keras.callbacks.ModelCheckpoint(
-        # Path where to save the model
-        # The two parameters below mean that we will overwrite
-        # the current checkpoint if and only if
-        # the `val_loss` score has improved.
-        # The saved model name will include the current epoch.
+        # 모델을 저장할 경로.
+        # 그 아래 두 매개변수는 `val_loss` 점수가
+        # 개선됐을 때만 현재 모델을 덮어 쓰라는 뜻이다.
+        # 모델 저장 이름에 현재 에포크가 들어간다.
         filepath="mymodel_{epoch}",
-        save_best_only=True,  # Only save a model if `val_loss` has improved.
+        save_best_only=True,  # `val_loss`가 개선된 경우에만 모델 저장
         monitor="val_loss",
         verbose=1,
     )
@@ -1346,23 +1320,23 @@ INFO:tensorflow:Assets written to: mymodel_2/assets
 
 ```
 </div>
-The `ModelCheckpoint` callback can be used to implement fault-tolerance:
-the ability to restart training from the last saved state of the model in case training
-gets randomly interrupted. Here's a basic example:
+`ModelCheckpoint` 콜백을 이용해 장애 저항성을 구현할 수 있다.
+의도치 않게 훈련이 중단된 경우에 마지막으로 저장된 모델 상태를 가지고
+훈련을 다시 시작할 수 있다. 간단한 예를 보자.
 
 
 ```python
 import os
 
-# Prepare a directory to store all the checkpoints.
+# 체크포인트들을 저장할 디렉터리 준비
 checkpoint_dir = "./ckpt"
 if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 
 
 def make_or_restore_model():
-    # Either restore the latest model, or create a fresh one
-    # if there is no checkpoint available.
+    # 마지막 모델을 복원한다. 저장된 체크포인트가 없으면
+    # 새 모델을 생성한다.
     checkpoints = [checkpoint_dir + "/" + name for name in os.listdir(checkpoint_dir)]
     if checkpoints:
         latest_checkpoint = max(checkpoints, key=os.path.getctime)
@@ -1374,8 +1348,8 @@ def make_or_restore_model():
 
 model = make_or_restore_model()
 callbacks = [
-    # This callback saves a SavedModel every 100 batches.
-    # We include the training loss in the saved model name.
+    # 배치 100개마다 SavedModel을 저장한다.
+    # 모델 저장 이름에 훈련 손실 값을 포함시킨다.
     keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_dir + "/ckpt-loss={loss:.2f}", save_freq=100
     )
@@ -1407,25 +1381,25 @@ Creating a new model
 
 ```
 </div>
-You call also write your own callback for saving and restoring models.
+모델을 저장하고 복원하는 새로운 콜백을 작성할 수도 있다.
 
-For a complete guide on serialization and saving, see the
-[guide to saving and serializing Models](/guides/serialization_and_saving/).
+직렬화와 저장에 대한 자세한 내용은
+[모델 직렬화와 저장 안내서](/guides/serialization_and_saving/)를 보라.
 
 ---
-## Using learning rate schedules
+## 학습률 스케줄 이용하기
 
-A common pattern when training deep learning models is to gradually reduce the learning
-as training progresses. This is generally known as "learning rate decay".
+딥 러닝 모델 훈련에 흔한 패턴 하나는 훈련이 진행됨에 따라 학습률을
+점진적으로 낮추는 것이다. 이를 보통 "학습률 감쇄(decay)"라 한다.
 
-The learning decay schedule could be static (fixed in advance, as a function of the
-current epoch or the current batch index), or dynamic (responding to the current
-behavior of the model, in particular the validation loss).
+학습률 감쇄는 (현재 에포크나 현재 배치 번호에 따라 미리 정해지는)
+정적 방식일 수도 있고 (모델의 현재 동작, 특히 평가 손실에 따라 바뀌는)
+동적 방식일 수도 있다.
 
-### Passing a schedule to an optimizer
+### 최적화 객체에 감쇄 방식 주기
 
-You can easily use a static learning rate decay schedule by passing a schedule object
-as the `learning_rate` argument in your optimizer:
+정적 학습률 감쇄 방식을 쓰려면 최적화 객체의 `learning_rate` 인자로
+스케줄 객체를 주기만 하면 된다.
 
 
 ```python
@@ -1437,54 +1411,51 @@ lr_schedule = keras.optimizers.schedules.ExponentialDecay(
 optimizer = keras.optimizers.RMSprop(learning_rate=lr_schedule)
 ```
 
-Several built-in schedules are available: `ExponentialDecay`, `PiecewiseConstantDecay`,
-`PolynomialDecay`, and `InverseTimeDecay`.
+`ExponentialDecay`, `PiecewiseConstantDecay`, `PolynomialDecay`, `InverseTimeDecay`
+등의 다양한 스케줄을 이용할 수 있다.
 
-### Using callbacks to implement a dynamic learning rate schedule
+### 콜백 이용해 동적 학습률 감쇄 구현하기
 
-A dynamic learning rate schedule (for instance, decreasing the learning rate when the
-validation loss is no longer improving) cannot be achieved with these schedule objects,
-since the optimizer does not have access to validation metrics.
+스케줄 객체를 가지고는 동적 학습률 감쇄가 (예를 들어 평가 손실 값이 더
+개선되지 않을 때 학습률을 낮추는 게) 불가능하다. 최적화 객체에서 평가 지표에
+접근할 수 없기 때문이다.
 
-However, callbacks do have access to all metrics, including validation metrics! You can
-thus achieve this pattern by using a callback that modifies the current learning rate
-on the optimizer. In fact, this is even built-in as the `ReduceLROnPlateau` callback.
+하지만 콜백에선 평가 지표를 포함해 모든 지표들에 접근이 가능하다. 따라서
+최적화 객체의 현재 학습률을 바꾸는 콜백을 이용하면 동적 감쇄를 구현할 수 있다.
+실제로 그 동작이 `ReduceLROnPlateau` 콜백으로 내장돼 있기도 하다.
 
 ---
-## Visualizing loss and metrics during training
+## 훈련 중 손실과 지표 시각화하기
 
-The best way to keep an eye on your model during training is to use
-[TensorBoard](https://www.tensorflow.org/tensorboard) -- a browser-based application
-that you can run locally that provides you with:
+훈련 중 모델을 관찰하기에 가장 좋은 방법은
+[텐서보드](https://www.tensorflow.org/tensorboard)를 이용하는 것이다.
+로컬에서 돌릴 수 있는 브라우저 기반 응용이며 다음을 제공한다.
 
-- Live plots of the loss and metrics for training and evaluation
-- (optionally) Visualizations of the histograms of your layer activations
-- (optionally) 3D visualizations of the embedding spaces learned by your `Embedding`
-layers
+- 훈련과 평가의 손실 및 지표들의 실시간 그래프
+- (선택적) 층 활성 히스토그램 시각화
+- (선택적) `Embedding` 층에서 학습한 내장 공간 3차원 시각화
 
-If you have installed TensorFlow with pip, you should be able to launch TensorBoard
-from the command line:
+텐서플로를 pip로 설치했다면 다음 명령으로 텐서보드를 띄울 수 있을 것이다.
 
 ```
 tensorboard --logdir=/full_path_to_your_logs
 ```
 
-### Using the TensorBoard callback
+### 텐서보드 콜백 이용하기
 
-The easiest way to use TensorBoard with a Keras model and the `fit()` method is the
-`TensorBoard` callback.
+케라스 모델과 `fit()` 메서드에서 텐서보드를 이용하는 가장 쉬운 방식은
+`TensorBoard` 콜백이다.
 
-In the simplest case, just specify where you want the callback to write logs, and
-you're good to go:
+가장 간단하게는 콜백에서 로그를 기록할 곳을 지정하는 것만으로 충분하다.
 
 
 ```python
 keras.callbacks.TensorBoard(
     log_dir="/full_path_to_your_logs",
-    histogram_freq=0,  # How often to log histogram visualizations
-    embeddings_freq=0,  # How often to log embedding visualizations
-    update_freq="epoch",
-)  # How often to write logs (default: once per epoch)
+    histogram_freq=0,  # 히스토그램 시각화 로그 기록 빈도
+    embeddings_freq=0,  # 내장 시각화 로그 기록 빈도
+    update_freq="epoch",  # 로그 기록 빈도 (기본: 에포크당 한 번)
+)
 ```
 
 
@@ -1496,5 +1467,4 @@ keras.callbacks.TensorBoard(
 
 ```
 </div>
-For more information, see the
-[documentation for the `TensorBoard` callback](/api/callbacks/tensorboard/).
+더 자세한 내용은 [`TensorBoard` 콜백 문서](/api/callbacks/tensorboard/)를 보라.
