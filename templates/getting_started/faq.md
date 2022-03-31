@@ -170,7 +170,7 @@ With `ParameterServerStrategy`:
 ```python
 cluster_resolver = ...
 if cluster_resolver.task_type in ("worker", "ps"):
-  # Start a `tf.distribute.Server` and wait.
+  # Start a tf.distribute.Server and wait.
   ...
 elif cluster_resolver.task_type == "evaluator":
   # Run an (optional) side-car evaluation
