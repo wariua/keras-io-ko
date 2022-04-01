@@ -475,7 +475,7 @@ from tensorflow.keras.models import load_model
 model = load_model('my_model.h5', custom_objects={'AttentionLayer': AttentionLayer})
 ```
 
-Alternatively, you can use a [custom object scope](https://keras.io/utils/#customobjectscope):
+Alternatively, you can use a [custom object scope](/api/utils/serialization_utils/#customobjectscope-class):
 
 ```python
 from tensorflow.keras.utils import CustomObjectScope

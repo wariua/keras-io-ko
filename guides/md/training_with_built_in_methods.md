@@ -41,7 +41,7 @@ Sequential models, models built with the Functional API, and models written from
 scratch via model subclassing.
 
 This guide doesn't cover distributed training, which is covered in our
-[guide to multi-GPU & distributed training](https://keras.io/guides/distributed_training/).
+[guide to multi-GPU & distributed training](/guides/distributed_training/).
 
 ---
 ## API overview: a first end-to-end example
@@ -1497,4 +1497,4 @@ keras.callbacks.TensorBoard(
 ```
 </div>
 For more information, see the
-[documentation for the `TensorBoard` callback](https://keras.io/api/callbacks/tensorboard/).
+[documentation for the `TensorBoard` callback](/api/callbacks/tensorboard/).

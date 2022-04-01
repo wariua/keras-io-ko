@@ -982,10 +982,10 @@ following built-in training infrastructure features:
 callbacks for early-stopping, model checkpointing,
 and monitoring training with TensorBoard. You can also
 [implement custom callbacks](/guides/writing_your_own_callbacks/) if needed.
-* [Distributed training](https://keras.io/guides/distributed_training/). You
+* [Distributed training](/guides/distributed_training/). You
 can easily scale up your training to multiple GPUs, TPU, or even multiple machines
 with the `tf.distribute` API -- with no changes to your code.
-* [Step fusing](https://keras.io/api/models/model_training_apis/#compile-method).
+* [Step fusing](/api/models/model_training_apis/#compile-method).
 With the `steps_per_execution` argument in `Model.compile()`, you can process
 multiple batches in a single `tf.function` call, which greatly improves
 device utilization on TPUs.
@@ -1036,7 +1036,7 @@ zero-code distribution support, and step fusing support.
 You may also override `test_step()` to customize what happens in `evaluate()`,
 and override `predict_step()` to customize what happens in `predict()`. For more
 information, please refer to
-[this guide](https://keras.io/guides/customizing_what_happens_in_fit/).
+[this guide](/guides/customizing_what_happens_in_fit/).
 
 
 ```python
