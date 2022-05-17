@@ -1,8 +1,8 @@
-# Keras.io documentation generator
+# keras.io 문서 소스
 
-This repository hosts the code used to generate the [keras.io](https://keras.io) website.
+이 저장소에는 [keras.io](https://keras.io) 웹 사이트 생성에 쓰이는 코드가 담겨 있다.
 
-## Generating a local copy of the website
+## 로컬에서 웹 사이트 사본 만들기
 
 ```
 pip install -r requirements.txt
@@ -11,22 +11,22 @@ python autogen.py make
 python autogen.py serve
 ```
 
-If you have Docker (you don't need the gpu version of Docker), you can run instead:
+도커가 있다면 (도커 GPU 버전 필요치 않음) 다음처럼 실행할 수 있다.
 
 ```
 docker build -t keras-io . && docker run --rm -p 8000:8000 keras-io
 ```
 
-It will take a while the first time because it's going to pull the
-image and the dependencies, but on the next times it'll be much faster.
+처음에는 이미지와 의존성을 당겨오느라 시간이 좀 걸리지만 이후로는
+훨씬 빨리 동작한다.
 
-Another way of testing using Docker is via our Makefile:
+도커를 써서 테스트하는 또 다른 방식은 Makefile을 이용하는 것이다.
 
 ```
 make container-test
 ```
 
-This command will build a Docker image with a documentation server and run it.
+이 명령은 문서 서버를 담은 도커 이미지를 만들어서 실행한다.
 
 
 ## Call for examples
