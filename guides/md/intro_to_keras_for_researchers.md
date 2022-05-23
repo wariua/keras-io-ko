@@ -1351,7 +1351,7 @@ The idea is to use a small deep neural network (the hypernetwork) to generate
 the weights for a larger network (the main network).
 
 Let's implement a really trivial hypernetwork: we'll use a small 2-layer network  to
-generate the weights of a larger 3-layer network.
+generate the weights of a larger 2-layer network.
 
 
 ```python
