@@ -327,8 +327,8 @@ _ = layer(tf.zeros(1, 1))
 assert len(layer.losses) == 1  # This is the loss created during the call above
 ```
 
-In addition, the `loss` property also contains regularization losses created
-for the weights of any inner layer:
+In addition, the `layer.losses` property also contains regularization
+losses created for the weights of any inner layer:
 
 
 ```python
